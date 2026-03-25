@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân viên | Modeva</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page admin-dashboard-page" data-dashboard-role="staff">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header admin-dash-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Staff</small>
+                </span>
+            </a>
+            <div class="admin-header-meta">
+                <span id="dashRoleBadge" class="admin-role-pill">Staff</span>
+                <span id="dashUserHello" class="admin-user-line"></span>
+                <button type="button" id="btnLogoutDash" class="btn btn-secondary-modern btn-sm">Đăng xuất</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-shell container">
+        <div class="admin-layout">
+            <aside class="admin-sidebar">
+                <p class="admin-sidebar__label">Menu</p>
+                <nav class="admin-nav">
+                    <button type="button" class="admin-nav__item is-active" data-dash-target="overview"><i class="fas fa-chart-pie"></i> Tổng quan</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="products"><i class="fas fa-shirt"></i> Sản phẩm</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="categories"><i class="fas fa-folder-tree"></i> Danh mục</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="inventory"><i class="fas fa-warehouse"></i> Kho hàng</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="orders"><i class="fas fa-receipt"></i> Đơn hàng</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="customers"><i class="fas fa-users"></i> Khách hàng</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="promos"><i class="fas fa-tags"></i> Khuyến mãi</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="reports"><i class="fas fa-chart-line"></i> Báo cáo</button>
+                    <button type="button" class="admin-nav__item" data-dash-target="system"><i class="fas fa-shield-halved"></i> Hệ thống</button>
+                </nav>
+            </aside>
+
+            <div class="admin-main">
+                <section id="panel-overview" class="admin-panel is-active">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Bảng điều khiển</span>
+                            <h2>Tổng quan</h2>
+                        </div>
+                    </div>
+                    <div id="dashOverview"></div>
+                </section>
+
+                <section id="panel-products" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Quản lý</span>
+                            <h2>Sản phẩm — size, màu, ảnh, giá &amp; khuyến mãi</h2>
+                        </div>
+                    </div>
+                    <form id="formNewProduct" class="admin-form-card profile-form">
+                        <h3>Thêm sản phẩm</h3>
+                        <div class="grid-two">
+                            <label>Tên <input type="text" id="npName" required placeholder="Áo khoác"></label>
+                            <label>Danh mục <select id="npCat" required></select></label>
+                        </div>
+                        <div class="grid-two">
+                            <label>Size (cách nhau dấu phẩy) <input type="text" id="npSizes" placeholder="S,M,L"></label>
+                            <label>Màu <input type="text" id="npColors" placeholder="Đen, Kem"></label>
+                        </div>
+                        <div class="grid-two">
+                            <label>Giá (VNĐ) <input type="number" id="npPrice" min="0" required placeholder="990000"></label>
+                            <label>Giá KM (để trống nếu không) <input type="number" id="npSale" min="0" placeholder="790000"></label>
+                        </div>
+                        <div class="grid-two">
+                            <label>URL ảnh (tuỳ chọn) <input type="url" id="npImageUrl" placeholder="https://…"></label>
+                            <label>Dòng phụ (catalog) <input type="text" id="npLineLabel" placeholder="Nam • Áo nam — để trống lấy theo danh mục"></label>
+                        </div>
+                        <div class="grid-two">
+                            <label>Số ảnh (minh họa) <input type="number" id="npImg" min="1" value="3"></label>
+                            <label>Nhãn trên thẻ SP <select id="npBadge" title="Hiển thị góc ảnh ở trang Danh mục">
+                                <option value="">Tự động (% giảm nếu có giá KM)</option>
+                                <option value="none">Không nhãn</option>
+                                <option value="new">NEW</option>
+                                <option value="hot">HOT</option>
+                                <option value="bestseller">BEST SELLER</option>
+                            </select></label>
+                        </div>
+                        <p class="admin-hint">Chọn đúng <strong>Danh mục</strong> trong nhóm. Bấm <strong>Sửa</strong> ở bảng để đổi danh mục, giá hoặc ảnh.</p>
+                        <button type="submit" class="btn btn-primary-modern">Thêm sản phẩm</button>
+                    </form>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table" id="tableProducts">
+                            <thead>
+                                <tr>
+                                    <th>Mã</th><th>Tên</th><th>Danh mục</th><th>Size</th><th>Màu</th><th>Giá</th><th>KM</th><th>Ảnh</th><th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="panel-categories" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Phân cấp</span>
+                            <h2>Danh mục — Nam / Nữ / Trẻ em</h2>
+                        </div>
+                    </div>
+                    <form id="formNewCategory" class="admin-form-card profile-form admin-only">
+                        <h3>Thêm danh mục</h3>
+                        <div class="grid-two">
+                            <label>Tên <input type="text" id="ncName" required></label>
+                            <label>Thuộc <select id="ncParent"><option value="">— Cấp gốc —</option></select></label>
+                        </div>
+                        <button type="submit" class="btn btn-primary-modern">Lưu danh mục</button>
+                    </form>
+                    <div id="categoryTree" class="admin-tree"></div>
+                </section>
+
+                <section id="panel-inventory" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Tồn kho</span>
+                            <h2>Theo sản phẩm, size &amp; màu</h2>
+                        </div>
+                    </div>
+                    <p class="admin-hint">Hàng tồn ≤ ngưỡng hoặc = 0 được tô cảnh báo.</p>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table" id="tableInventory">
+                            <thead>
+                                <tr><th>Sản phẩm</th><th>Size</th><th>Màu</th><th>Tồn</th><th>Ngưỡng</th><th>Trạng thái</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="panel-orders" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Vận hành</span>
+                            <h2>Đơn hàng</h2>
+                        </div>
+                    </div>
+                    <p class="admin-hint">Cập nhật trạng thái, xem chi tiết, in hóa đơn (cửa sổ mới).</p>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table" id="tableOrders">
+                            <thead>
+                                <tr><th>Mã</th><th>Khách</th><th>Email</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th><th>Thao tác</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="panel-customers" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">CRM</span>
+                            <h2>Khách hàng — VIP / Thường</h2>
+                        </div>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table" id="tableCustomers">
+                            <thead>
+                                <tr><th>Tên</th><th>Email</th><th>Phân loại</th><th>Số đơn</th><th>Tổng chi</th><th>Lịch sử</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="panel-promos" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Ưu đãi</span>
+                            <h2>Coupon · Sale theo thời gian · Combo</h2>
+                        </div>
+                    </div>
+                    <form id="formNewCoupon" class="admin-form-card profile-form admin-only">
+                        <h3>Thêm coupon (Admin)</h3>
+                        <div class="grid-two">
+                            <label>Mã <input type="text" id="couponCode" required placeholder="SALE10"></label>
+                            <label>Giảm % <input type="number" id="couponVal" min="1" max="90" value="15"></label>
+                        </div>
+                        <label>Hết hạn <input type="date" id="couponExp"></label>
+                        <button type="submit" class="btn btn-primary-modern">Thêm coupon</button>
+                    </form>
+                    <h3 class="admin-subtitle">Coupon</h3>
+                    <div id="promoCoupons"></div>
+                    <h3 class="admin-subtitle">Sale theo thời gian</h3>
+                    <div id="promoFlash"></div>
+                    <h3 class="admin-subtitle">Combo sản phẩm</h3>
+                    <div id="promoCombos"></div>
+                </section>
+
+                <section id="panel-reports" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Thống kê</span>
+                            <h2>Báo cáo</h2>
+                        </div>
+                    </div>
+                    <div id="dashReports"></div>
+                </section>
+
+                <section id="panel-system" class="admin-panel">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">An toàn &amp; vận hành</span>
+                            <h2>Hệ thống</h2>
+                        </div>
+                    </div>
+                    <p id="systemRolesNote" class="admin-hint"></p>
+                    <div class="admin-system-cards">
+                        <article class="admin-info-card">
+                            <h3>Phân quyền</h3>
+                            <p><strong>Admin</strong> — toàn quyền cấu hình, sao lưu, xóa dữ liệu nhạy cảm.</p>
+                            <p><strong>Staff</strong> — vận hành đơn, kho, sản phẩm (không xóa), xem báo cáo.</p>
+                            <p><strong>Customer</strong> — mua sắm, tài khoản cá nhân trên trang thành viên.</p>
+                        </article>
+                        <article class="admin-info-card">
+                            <h3>Bảo mật (demo)</h3>
+                            <p>Mật khẩu đăng nhập nội bộ được băm <strong>SHA-256</strong> trước khi so khớp; phiên lưu <code>localStorage</code>.</p>
+                        </article>
+                        <article class="admin-info-card admin-only">
+                            <h3>Sao lưu</h3>
+                            <p>Tải file JSON gồm sản phẩm, danh mục, kho, đơn, khách, khuyến mãi và log.</p>
+                            <button type="button" id="btnBackup" class="btn btn-accent">Tạo bản sao lưu</button>
+                        </article>
+                    </div>
+                    <h3 class="admin-subtitle">Nhật ký hệ thống</h3>
+                    <div id="systemLogs" class="admin-logs"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="adminModal" class="admin-modal" hidden>
+        <div class="admin-modal__backdrop"></div>
+        <div class="admin-modal__box">
+            <button type="button" id="adminModalClose" class="admin-modal__close" aria-label="Đóng">&times;</button>
+            <div id="adminModalBody" class="admin-modal__body"></div>
+        </div>
+    </div>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/catalog-sync.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/admin-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modeva — Data Tools (Anonymized)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .tools-wrap { max-width: 980px; margin: 28px auto; padding: 0 16px; }
+    .tools-card { background: rgba(255,255,255,.92); border: 1px solid rgba(15,23,42,.10); border-radius: 16px; padding: 18px; box-shadow: 0 18px 50px rgba(15,23,42,.10); }
+    .tools-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 900px) { .tools-grid { grid-template-columns: 1.1fr .9fr; } }
+    .tools-title { display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+    .tools-title h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+    .tools-title a { font-weight: 700; text-decoration: none; }
+    .tools-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .tools-actions .btn { border-radius: 999px; padding: 10px 14px; font-weight: 800; }
+    .tools-actions input[type="file"] { padding: 10px; background: rgba(15,23,42,.04); border: 1px dashed rgba(15,23,42,.25); border-radius: 12px; }
+    .tools-note { margin-top: 10px; color: rgba(15,23,42,.78); line-height: 1.55; }
+    .tools-note code { font-weight: 800; }
+    textarea { width: 100%; min-height: 280px; border-radius: 14px; padding: 12px; border: 1px solid rgba(15,23,42,.18); background: rgba(255,255,255,.86); }
+    .kv { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; white-space: pre-wrap; }
+  </style>
+</head>
+<body class="fashion-page">
+  <div class="site-background"></div>
+
+  <div class="tools-wrap">
+    <div class="tools-card">
+      <div class="tools-title">
+        <h1>Data Tools — Export/Import Snapshot (Ẩn danh)</h1>
+        <a href="../index.html">← Về trang chủ</a>
+      </div>
+
+      <div class="tools-grid" style="margin-top: 12px;">
+        <section>
+          <h3 style="margin: 0 0 8px;">Import snapshot vào LocalStorage</h3>
+          <div class="tools-actions">
+            <input type="file" id="snapshotFile" accept="application/json" />
+            <button type="button" class="btn btn-primary-modern" id="btnImport">Import</button>
+            <button type="button" class="btn btn-secondary-modern" id="btnImportRepoDemo">Import snapshot demo (trong repo)</button>
+            <button type="button" class="btn btn-secondary-modern" id="btnClear">Clear LocalStorage</button>
+          </div>
+          <p class="tools-note">
+            Snapshot mặc định trong repo nằm ở <code>data/snapshot.anonymized.json</code>.
+            Import sẽ ghi đè các key tương ứng trong <code>localStorage</code>.
+          </p>
+          <div class="kv" id="importStatus"></div>
+        </section>
+
+        <section>
+          <h3 style="margin: 0 0 8px;">Export snapshot ẩn danh (từ máy bạn)</h3>
+          <div class="tools-actions">
+            <button type="button" class="btn btn-primary-modern" id="btnExport">Export anonymized</button>
+            <button type="button" class="btn btn-secondary-modern" id="btnCopy">Copy JSON</button>
+            <button type="button" class="btn btn-secondary-modern" id="btnDownload">Download JSON</button>
+          </div>
+          <p class="tools-note">
+            Export sẽ tự ẩn danh email/sđt/địa chỉ trong các key đơn hàng/khách hàng.
+            Dữ liệu sản phẩm (giá/size/màu/mẫu mã) vẫn giữ nguyên để demo/chấm.
+          </p>
+        </section>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <label style="font-weight: 800;">Snapshot JSON</label>
+        <textarea id="snapshotText" spellcheck="false" class="kv" placeholder="Bấm Export hoặc Import để xem nội dung..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data-tools.js?v=20260325a"></script>
+</body>
+</html>
+

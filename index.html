@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modeva 2026 | Fashion Commerce Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header">
+        <div class="container fashion-header__inner">
+            <a href="index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Future Retail 2026</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="index.html" class="active">Trang chủ</a>
+                <a href="pages/catalog.html">Danh mục</a>
+                <a href="pages/customer-care.html">Hỗ trợ</a>
+                <a href="#new-arrivals">Bộ sưu tập mới</a>
+                <a href="#flash-sale">Flash sale</a>
+                <a href="pages/account.html">Tài khoản</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <form class="fashion-search" action="pages/catalog.html">
+                    <i class="fas fa-search"></i>
+                    <input type="search" name="q" placeholder="Tìm jacket, denim, accessory...">
+                </form>
+                <a href="pages/account.html" class="fashion-icon-link" aria-label="Tài khoản">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="pages/cart.html" class="fashion-icon-link" aria-label="Giỏ hàng">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span class="badge"></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-2026">
+            <div class="container hero-2026__grid">
+                <div class="hero-2026__copy">
+                    <span class="eyebrow">Spring/Summer 2026 Drop</span>
+                    <h1> Fashion leads the trends.</h1>
+                    <p>Fashion is a way to express your individuality and personal style.</p>
+                    <div class="hero-2026__actions">
+                        <a href="pages/catalog.html" class="btn btn-primary-modern">Khám phá sản phẩm </a>
+                        <a href="pages/account.html" class="btn btn-secondary-modern">Mở tài khoản</a>
+                    </div>
+                    <div class="hero-2026__metrics">
+                        <article>
+                            <strong>120K+</strong>
+                            <span>thành viên active</span>
+                        </article>
+                        <article>
+                            <strong>04</strong>
+                            <span>lineup Nam, Nữ, Trẻ em, Phụ kiện</span>
+                        </article>
+                        <article>
+                            <strong>2H</strong>
+                            <span>same-day delivery nội thành</span>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="hero-slider" data-slider>
+                    <article class="hero-slide is-active" data-slide>
+                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80" alt="Bộ sưu tập nữ 2026">
+                        <div class="hero-slide__content">
+                            <span>New Collection</span>
+                            <h2>Neo Tailoring</h2>
+                            <p>Layering tinh gọn, palette cát cháy và silhouette sắc nét cho mùa 2026.</p>
+                        </div>
+                    </article>
+                    <article class="hero-slide" data-slide>
+                        <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80" alt="Bộ sưu tập nam hiện đại">
+                        <div class="hero-slide__content">
+                            <span>Men Capsule</span>
+                            <h2>Utility Luxe</h2>
+                            <p>Áo khoác techwear, denim wash và knitwear cao cấp cho street office.</p>
+                        </div>
+                    </article>
+                    <article class="hero-slide" data-slide>
+                        <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80" alt="Phụ kiện và thời trang trẻ em">
+                        <div class="hero-slide__content">
+                            <span>Family Edit</span>
+                            <h2>Weekend Glow</h2>
+                            <p>Kids essentials, sneaker bright-tone và phụ kiện hoàn thiện outfit cuối tuần.</p>
+                        </div>
+                    </article>
+                    <div class="hero-slider__controls">
+                        <button type="button" class="slider-dot is-active" data-slide-to="0" aria-label="Slide 1"></button>
+                        <button type="button" class="slider-dot" data-slide-to="1" aria-label="Slide 2"></button>
+                        <button type="button" class="slider-dot" data-slide-to="2" aria-label="Slide 3"></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="spotlight-strip">
+            <div class="container spotlight-strip__grid">
+                <article>
+                    <span>Express Curation</span>
+                    <h3>Gợi ý outfit theo thời tiết và lịch trình trong ngày.</h3>
+                </article>
+                <article>
+                    <span>Members First</span>
+                    <h3>Mở sớm bộ sưu tập mới cho khách hàng đăng ký tài khoản.</h3>
+                </article>
+                <article>
+                    <span>Smart Checkout</span>
+                    <h3>Giữ giỏ hàng, địa chỉ và lịch sử mua sắm đồng bộ theo hồ sơ.</h3>
+                </article>
+            </div>
+        </section>
+
+        <section class="collections-section" id="new-arrivals">
+            <div class="container">
+                <div class="section-heading modern-heading">
+                    <div>
+                        <span class="eyebrow">Banner / Slider bộ sưu tập mới</span>
+                        <h2>Bộ sưu tập mở màn cho mùa mua sắm 2026</h2>
+                    </div>
+                    <a href="pages/catalog.html" class="text-link">Xem toàn bộ lookbook</a>
+                </div>
+
+                <div class="collections-grid">
+                    <article class="collection-card tall coral">
+                        <div>
+                            <span>Women</span>
+                            <h3>Solar Linen</h3>
+                            <p>Váy suông, blazer mỏng và bảng màu camel cho city summer.</p>
+                        </div>
+                        <a href="pages/catalog.html?category=women">Mua ngay</a>
+                    </article>
+                    <article class="collection-card navy">
+                        <div>
+                            <span>Men</span>
+                            <h3>Studio Uniform</h3>
+                            <p>Denim, bomber và áo knit cho nhịp sống sáng tạo.</p>
+                        </div>
+                        <a href="pages/catalog.html?category=men">Khám phá</a>
+                    </article>
+                    <article class="collection-card sand">
+                        <div>
+                            <span>Kids</span>
+                            <h3>Playground Code</h3>
+                            <p>Set đồ nhẹ, bền, dễ vận động cho cả tuần năng động.</p>
+                        </div>
+                        <a href="pages/catalog.html?category=kids">Chọn ngay</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="categories-2026">
+            <div class="container">
+                <div class="section-heading modern-heading">
+                    <div>
+                        <span class="eyebrow">Danh mục thời trang</span>
+                        <h2>Duyệt nhanh theo nhóm sản phẩm chính</h2>
+                    </div>
+                </div>
+
+                <div class="category-showcase">
+                    <a class="category-pill-card" href="pages/catalog.html?category=men">
+                        <span>Nam</span>
+                        <strong>Outerwear, Polo, Denim</strong>
+                    </a>
+                    <a class="category-pill-card" href="pages/catalog.html?category=women">
+                        <span>Nữ</span>
+                        <strong>Dress, Blazer, Knit</strong>
+                    </a>
+                    <a class="category-pill-card" href="pages/catalog.html?category=kids">
+                        <span>Trẻ em</span>
+                        <strong>Set đồ, áo thun, sneaker</strong>
+                    </a>
+                    <a class="category-pill-card" href="pages/catalog.html?category=accessories">
+                        <span>Phụ kiện</span>
+                        <strong>Túi, kính, đồng hồ, mũ</strong>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="products-2026">
+            <div class="container">
+                <div class="section-heading modern-heading">
+                    <div>
+                        <span class="eyebrow">Gợi ý cho bạn</span>
+                        <h2>Có thể bạn cũng thích</h2>
+                    </div>
+                    <div class="heading-badges">
+                        <span>Ảnh lookbook chất lượng cao</span>
+                        <span>Đồng bộ danh mục &amp; Admin</span>
+                    </div>
+                </div>
+
+                <div class="modern-products-grid">
+                    <article class="modern-product-card">
+                        <div class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1606107557195-0e29a21b7b8d?auto=format&fit=crop&w=1200&q=85" alt="Giày Sneaker Cloud Run" loading="lazy">
+                            <span class="product-tag sale">-20%</span>
+                        </div>
+                        <div class="modern-product-card__body">
+                            <div>
+                                <p class="product-meta">SNEAKER</p>
+                                <h3>Giày Sneaker Cloud Run</h3>
+                            </div>
+                            <div class="modern-product-card__price">
+                                <strong>559.000₫</strong>
+                                <span>699.000₫</span>
+                            </div>
+                            <a href="pages/catalog.html" class="btn btn-dark-modern">Xem ở danh mục</a>
+                        </div>
+                    </article>
+
+                    <article class="modern-product-card">
+                        <div class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1506629903123-904e278bed34?auto=format&fit=crop&w=1200&q=85" alt="Quần Tây Slim Tailor" loading="lazy">
+                            <span class="product-tag new">NEW</span>
+                        </div>
+                        <div class="modern-product-card__body">
+                            <div>
+                                <p class="product-meta">BOTTOMS</p>
+                                <h3>Quần Tây Slim Tailor</h3>
+                            </div>
+                            <div class="modern-product-card__price">
+                                <strong>899.000₫</strong>
+                            </div>
+                            <a href="pages/catalog.html" class="btn btn-dark-modern">Xem ở danh mục</a>
+                        </div>
+                    </article>
+
+                    <article class="modern-product-card">
+                        <div class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=1200&q=85" alt="Túi Da Minimal Tote" loading="lazy">
+                        </div>
+                        <div class="modern-product-card__body">
+                            <div>
+                                <p class="product-meta">ACCESSORIES</p>
+                                <h3>Túi Da Minimal Tote</h3>
+                            </div>
+                            <div class="modern-product-card__price">
+                                <strong>749.000₫</strong>
+                            </div>
+                            <a href="pages/catalog.html" class="btn btn-dark-modern">Xem ở danh mục</a>
+                        </div>
+                    </article>
+
+                    <article class="modern-product-card">
+                        <div class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1524592094714-0ce0658e57ca?auto=format&fit=crop&w=1200&q=85" alt="Đồng Hồ Chrono Brown" loading="lazy">
+                            <span class="product-tag hot">HOT</span>
+                        </div>
+                        <div class="modern-product-card__body">
+                            <div>
+                                <p class="product-meta">WATCH</p>
+                                <h3>Đồng Hồ Chrono Brown</h3>
+                            </div>
+                            <div class="modern-product-card__price">
+                                <strong>649.000₫</strong>
+                                <span>999.000₫</span>
+                            </div>
+                            <a href="pages/catalog.html" class="btn btn-dark-modern">Xem ở danh mục</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="flash-sale-2026" id="flash-sale">
+            <div class="container flash-sale-2026__grid">
+                <div class="flash-sale-2026__intro">
+                    <span class="eyebrow">Khuyến mãi / flash sale</span>
+                    <h2>Khối sale nhấn mạnh urgency nhưng vẫn giữ cảm giác premium.</h2>
+                    <p>Countdown, thẻ khuyến mãi, voucher hiển thị lớn và CTA trực tiếp vào trang lọc sản phẩm.</p>
+                    <div class="countdown" data-countdown="2026-03-18T23:59:59">
+                        <div><strong data-countdown-days>00</strong><span>Ngày</span></div>
+                        <div><strong data-countdown-hours>00</strong><span>Giờ</span></div>
+                        <div><strong data-countdown-minutes>00</strong><span>Phút</span></div>
+                        <div><strong data-countdown-seconds>00</strong><span>Giây</span></div>
+                    </div>
+                </div>
+                <div class="flash-sale-cards">
+                    <article>
+                        <span>Voucher</span>
+                        <h3>WELCOME26</h3>
+                        <p>Giảm 120K cho đơn từ 1.2 triệu</p>
+                    </article>
+                    <article>
+                        <span>Members Only</span>
+                        <h3>Early Access</h3>
+                        <p>Mở bán sớm 24h cho tài khoản đã đăng ký</p>
+                    </article>
+                    <article>
+                        <span>Shipping</span>
+                        <h3>2H City Rush</h3>
+                        <p>Giao nhanh nội thành cho các item gắn nhãn express</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="editorial-banner">
+            <div class="container editorial-banner__panel">
+                <div>
+                    <span class="eyebrow">Search + Filter Ready</span>
+                    <h2>Danh mục sản phẩm và tìm kiếm đã được tách thành trải nghiệm riêng.</h2>
+                    <p>Người dùng có thể tìm theo tên, lọc theo danh mục, giá, size, màu sắc và sắp xếp theo xu hướng mua sắm.</p>
+                </div>
+                <a href="pages/catalog.html" class="btn btn-primary-modern">Đi đến trang danh mục</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="fashion-footer">
+        <div class="container fashion-footer__grid">
+            <div>
+                <a href="index.html" class="fashion-logo footer-logo">
+                    <span class="fashion-logo__mark">M</span>
+                    <span>
+                        <strong>Modeva</strong>
+                        <small>Fashion Commerce 2026</small>
+                    </span>
+                </a>
+                <p>Nền tảng FE cho shop thời trang hiện đại: trực quan, premium, tối ưu danh mục và hành trình tài khoản.</p>
+            </div>
+            <div>
+                <h4>Khám phá</h4>
+                <a href="pages/catalog.html">Danh mục sản phẩm</a>
+                <a href="pages/customer-care.html">Trung tâm khách hàng</a>
+                <a href="#new-arrivals">Bộ sưu tập mới</a>
+                <a href="#flash-sale">Flash sale</a>
+            </div>
+            <div>
+                <h4>Tài khoản</h4>
+                <a href="pages/account.html">Đăng nhập / Đăng ký</a>
+                <a href="pages/account.html#profile">Thông tin cá nhân</a>
+                <a href="pages/account.html#addresses">Địa chỉ giao hàng</a>
+            </div>
+            <div>
+                <h4>Liên hệ</h4>
+                <a href="mailto:hello@modeva.vn">hello@modeva.vn</a>
+                <a href="tel:19002026">1900 2026</a>
+                <p>Hà Nội • TP.HCM • Online nationwide</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/modeva-logs.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

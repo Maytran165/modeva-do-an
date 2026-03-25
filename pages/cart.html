@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng | Modeva 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page fashion-cart-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Cart Space</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="../index.html">Trang chủ</a>
+                <a href="catalog.html">Danh mục</a>
+                <a href="customer-care.html">Hỗ trợ</a>
+                <a href="account.html">Tài khoản</a>
+                <a href="cart.html" class="active">Giỏ hàng</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="account.html" class="fashion-icon-link" aria-label="Tài khoản">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="cart.html" class="fashion-icon-link" aria-label="Giỏ hàng">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span class="badge"></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="cart-hero-modern">
+            <div class="container">
+                <span class="eyebrow">Giỏ hàng của bạn</span>
+                <h1>Đây là những sản phẩm bạn đã chọn</h1>
+                <p>Kiểm tra sản phẩm đã chọn, áp mã giảm giá và thanh toán trong một luồng liền mạch.</p>
+            </div>
+        </section>
+
+        <section class="cart-section-modern">
+            <div class="container cart-layout-modern">
+                <div class="cart-items-panel">
+                    <div class="cart-header" id="cartListHeader" style="display: none;">
+                        <div class="select-all">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" checked>
+                            <label for="selectAll">Chọn tất cả (0 sản phẩm)</label>
+                        </div>
+                        <div class="cart-actions-header">
+                            <span>Sản phẩm</span>
+                            <span>Số lượng</span>
+                            <span>Thành tiền</span>
+                            <span></span>
+                        </div>
+                    </div>
+
+                    <div class="cart-items">
+                        <!-- Sản phẩm được render từ sessionStorage (thêm từ Danh mục) -->
+                    </div>
+                </div>
+
+                <aside class="cart-summary">
+                    <div class="summary-card">
+                        <h3>Thông tin đơn hàng</h3>
+                        <p class="summary-subtitle">Mã ưu đãi sẽ được áp dụng ngay khi bạn nhấn xác nhận.</p>
+
+                        <div class="voucher-section">
+                            <div class="voucher-input-group">
+                                <input type="text" id="voucherCode" placeholder="Nhập mã giảm giá">
+                                <button class="btn-apply-voucher" onclick="applyVoucher()">Áp dụng</button>
+                            </div>
+                            <div class="available-vouchers">
+                                <p class="voucher-title"><i class="fas fa-ticket-alt"></i> Mã giảm giá có sẵn</p>
+                                <div class="voucher-item" onclick="selectVoucher('WELCOME2025', 50000)">
+                                    <div class="voucher-info">
+                                        <span class="voucher-code">WELCOME2025</span>
+                                        <span class="voucher-desc">Giảm 50.000₫</span>
+                                    </div>
+                                    <button class="btn-select-voucher" type="button">Chọn</button>
+                                </div>
+                                <div class="voucher-item" onclick="selectVoucher('FREESHIP', 30000)">
+                                    <div class="voucher-info">
+                                        <span class="voucher-code">FREESHIP</span>
+                                        <span class="voucher-desc">Miễn phí vận chuyển</span>
+                                    </div>
+                                    <button class="btn-select-voucher" type="button">Chọn</button>
+                                </div>
+                                <div class="voucher-item" onclick="selectVoucher('SALE100K', 100000)">
+                                    <div class="voucher-info">
+                                        <span class="voucher-code">SALE100K</span>
+                                        <span class="voucher-desc">Giảm 100.000₫ cho đơn từ 1.000.000₫</span>
+                                    </div>
+                                    <button class="btn-select-voucher" type="button">Chọn</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="summary-details">
+                            <div class="summary-row">
+                                <span>Tạm tính:</span>
+                                <span id="subtotal">0₫</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Giảm giá:</span>
+                                <span class="discount" id="discount">-0₫</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Phí vận chuyển:</span>
+                                <span id="shipping">0₫</span>
+                            </div>
+                            <div class="summary-divider"></div>
+                            <div class="summary-row total">
+                                <span>Tổng cộng:</span>
+                                <span class="total-amount" id="totalAmount">0₫</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-checkout" onclick="proceedToCheckout()">
+                            <i class="fas fa-shopping-bag"></i>
+                            Tiến hành thanh toán
+                        </button>
+
+                        <div class="continue-shopping">
+                            <a href="catalog.html"><i class="fas fa-arrow-left"></i> Tiếp tục mua sắm</a>
+                        </div>
+
+                        <div class="trust-badges">
+                            <div class="badge-item"><i class="fas fa-shield-alt"></i><span>Thanh toán an toàn</span></div>
+                            <div class="badge-item"><i class="fas fa-truck"></i><span>Giao hàng nhanh</span></div>
+                            <div class="badge-item"><i class="fas fa-undo"></i><span>Đổi trả dễ dàng</span></div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="cart-recommended">
+            <div class="container">
+                <div class="section-heading modern-heading">
+                    <div>
+                        <span class="eyebrow">Gợi ý cho bạn</span>
+                        <h2>Có thể bạn cũng thích</h2>
+                    </div>
+                </div>
+                <div class="modern-products-grid">
+                    <article class="modern-product-card">
+                        <a href="product-detail.html" class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80" alt="Sneaker trắng thời trang">
+                            <span class="product-tag sale">-20%</span>
+                        </a>
+                        <div class="modern-product-card__body">
+                            <p class="product-meta">Sneaker</p>
+                            <h3>Giày Sneaker Cloud Run</h3>
+                            <div class="modern-product-card__price">
+                                <strong>559.000₫</strong>
+                                <span>699.000₫</span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="modern-product-card">
+                        <a href="product-detail.html" class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=900&q=80" alt="Quần tây nam form slim">
+                            <span class="product-tag new">New</span>
+                        </a>
+                        <div class="modern-product-card__body">
+                            <p class="product-meta">Bottoms</p>
+                            <h3>Quần Tây Slim Tailor</h3>
+                            <div class="modern-product-card__price"><strong>899.000₫</strong></div>
+                        </div>
+                    </article>
+                    <article class="modern-product-card">
+                        <a href="product-detail.html" class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=900&q=80" alt="Túi xách da cao cấp">
+                        </a>
+                        <div class="modern-product-card__body">
+                            <p class="product-meta">Accessories</p>
+                            <h3>Túi Da Minimal Tote</h3>
+                            <div class="modern-product-card__price"><strong>749.000₫</strong></div>
+                        </div>
+                    </article>
+                    <article class="modern-product-card">
+                        <a href="product-detail.html" class="modern-product-card__media">
+                            <img src="https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?auto=format&fit=crop&w=900&q=80" alt="Đồng hồ nam dây da nâu">
+                            <span class="product-tag hot">Hot</span>
+                        </a>
+                        <div class="modern-product-card__body">
+                            <p class="product-meta">Watch</p>
+                            <h3>Đồng Hồ Chrono Brown</h3>
+                            <div class="modern-product-card__price">
+                                <strong>649.000₫</strong>
+                                <span>999.000₫</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="fashion-footer">
+        <div class="container fashion-footer__grid">
+            <div>
+                <a href="../index.html" class="fashion-logo footer-logo">
+                    <span class="fashion-logo__mark">M</span>
+                    <span>
+                        <strong>Modeva</strong>
+                        <small>Fashion Commerce</small>
+                    </span>
+                </a>
+                <p>Thiết kế mua sắm thời trang hiện đại, trải nghiệm liền mạch từ khám phá đến thanh toán.</p>
+            </div>
+            <div>
+                <h4>Danh mục</h4>
+                <a href="catalog.html">Nam</a>
+                <a href="catalog.html">Nữ</a>
+                <a href="catalog.html">Phụ kiện</a>
+            </div>
+            <div>
+                <h4>Hỗ trợ</h4>
+                <a href="customer-care.html">Trung tâm khách hàng</a>
+                <a href="#">Chính sách đổi trả</a>
+                <a href="#">Phương thức thanh toán</a>
+            </div>
+            <div>
+                <h4>Liên hệ</h4>
+                <p>support@modeva.vn</p>
+                <p>1900 1234</p>
+                <p>Hà Nội, Việt Nam</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/cart.js"></script>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sản phẩm | Modeva 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Product Studio</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="../index.html">Trang chủ</a>
+                <a href="catalog.html" class="active">Danh mục</a>
+                <a href="customer-care.html">Hỗ trợ</a>
+                <a href="account.html">Tài khoản</a>
+                <a href="cart.html">Giỏ hàng</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="account.html" class="fashion-icon-link" aria-label="Tài khoản">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="cart.html" class="fashion-icon-link" aria-label="Giỏ hàng">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span class="badge"></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb">
+        <div class="container">
+            <ul>
+                <li><a href="../index.html">Trang chủ</a></li>
+                <li><a href="catalog.html">Danh mục</a></li>
+                <li><a href="catalog.html">Thời trang nam</a></li>
+                <li class="active">Áo thun Premium Cotton</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Product Detail -->
+    <section class="product-detail">
+        <div class="container">
+            <div class="product-wrapper">
+                <!-- Product Images -->
+                <div class="product-images">
+                    <div class="main-image">
+                        <img id="mainImage" src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80" alt="Áo thun Premium">
+                        <div class="image-badges">
+                            <span class="badge-sale">-30%</span>
+                            <span class="badge-new">Mới</span>
+                        </div>
+                    </div>
+                    <div class="thumbnail-images">
+                        <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=200&q=80" data-full="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80" alt="Thumbnail 1" class="thumbnail active" onclick="changeImage(this)">
+                        <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=200&q=80" data-full="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1200&q=80" alt="Thumbnail 2" class="thumbnail" onclick="changeImage(this)">
+                        <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=200&q=80" data-full="https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=1200&q=80" alt="Thumbnail 3" class="thumbnail" onclick="changeImage(this)">
+                        <img src="https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=200&q=80" data-full="https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=1200&q=80" alt="Thumbnail 4" class="thumbnail" onclick="changeImage(this)">
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="product-info">
+                    <h1 class="product-title">Áo Thun Premium Cotton Nam Cao Cấp 2025</h1>
+                    
+                    <div class="product-rating">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                            <span class="rating-number">4.5</span>
+                        </div>
+                        <span class="reviews-count">(248 đánh giá)</span>
+                        <span class="sold-count">| Đã bán 1.2k</span>
+                    </div>
+
+                    <div class="product-price">
+                        <span class="current-price">349.000₫</span>
+                        <span class="original-price">499.000₫</span>
+                        <span class="discount-percent">-30%</span>
+                    </div>
+
+                    <div class="product-description-short">
+                        <p>Áo thun nam cao cấp chất liệu cotton 100% thấm hút mồ hôi tốt, form dáng hiện đại, phù hợp mọi lứa tuổi.</p>
+                    </div>
+
+                    <!-- Color Selection -->
+                    <div class="product-option">
+                        <label>Màu sắc:</label>
+                        <div class="color-options">
+                            <div class="color-item active" data-color="Đen" style="background: #000000;" onclick="selectColor(this)"></div>
+                            <div class="color-item" data-color="Trắng" style="background: #ffffff; border: 1px solid #ddd;" onclick="selectColor(this)"></div>
+                            <div class="color-item" data-color="Xanh Navy" style="background: #001f3f;" onclick="selectColor(this)"></div>
+                            <div class="color-item" data-color="Xám" style="background: #808080;" onclick="selectColor(this)"></div>
+                            <div class="color-item" data-color="Xanh Dương" style="background: #4A90E2;" onclick="selectColor(this)"></div>
+                        </div>
+                        <span class="selected-value" id="selectedColor">Đen</span>
+                    </div>
+
+                    <!-- Size Selection -->
+                    <div class="product-option">
+                        <label>Kích thước:</label>
+                        <div class="size-options">
+                            <div class="size-item" data-size="S" onclick="selectSize(this)">S</div>
+                            <div class="size-item active" data-size="M" onclick="selectSize(this)">M</div>
+                            <div class="size-item" data-size="L" onclick="selectSize(this)">L</div>
+                            <div class="size-item" data-size="XL" onclick="selectSize(this)">XL</div>
+                            <div class="size-item" data-size="XXL" onclick="selectSize(this)">XXL</div>
+                        </div>
+                        <span class="selected-value" id="selectedSize">M</span>
+                        <a href="#" class="size-guide">Hướng dẫn chọn size</a>
+                    </div>
+
+                    <!-- Stock Status -->
+                    <div class="stock-status">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Còn hàng: <strong>127 sản phẩm</strong></span>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="product-quantity">
+                        <label>Số lượng:</label>
+                        <div class="quantity-selector">
+                            <button class="qty-btn minus" onclick="decreaseQty()">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="quantity" value="1" min="1" max="127">
+                            <button class="qty-btn plus" onclick="increaseQty()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="product-actions">
+                        <button class="btn btn-cart" onclick="addToCart()">
+                            <i class="fas fa-shopping-cart"></i>
+                            Thêm vào giỏ hàng
+                        </button>
+                        <button class="btn btn-buy" onclick="buyNow()">
+                            <i class="fas fa-bolt"></i>
+                            Mua ngay
+                        </button>
+                        <button class="btn btn-wishlist" onclick="toggleWishlist(this)">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <!-- Guarantees -->
+                    <div class="product-guarantees">
+                        <div class="guarantee-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Bảo hành 12 tháng</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-truck"></i>
+                            <span>Miễn phí vận chuyển</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-undo"></i>
+                            <span>Đổi trả trong 7 ngày</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-certificate"></i>
+                            <span>Chính hãng 100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Details Tabs -->
+            <div class="product-tabs">
+                <div class="tabs-header">
+                    <button class="tab-btn active" onclick="openTab(event, 'description')">Mô tả sản phẩm</button>
+                    <button class="tab-btn" onclick="openTab(event, 'specifications')">Thông số kỹ thuật</button>
+                    <button class="tab-btn" onclick="openTab(event, 'reviews')">Đánh giá (248)</button>
+                </div>
+
+                <div id="description" class="tab-content active">
+                    <h3>Mô tả chi tiết sản phẩm</h3>
+                    <p>Áo thun Premium Cotton là sản phẩm cao cấp được thiết kế dành cho nam giới hiện đại, năng động. Sản phẩm sử dụng chất liệu cotton 100% cao cấp, mang lại cảm giác mềm mại, thoáng mát và thấm hút mồ hôi tốt.</p>
+                    
+                    <h4>Đặc điểm nổi bật:</h4>
+                    <ul>
+                        <li>Chất liệu: 100% Cotton Premium cao cấp nhập khẩu</li>
+                        <li>Form dáng: Regular fit, ôm vừa vặn, thoải mái</li>
+                        <li>Công nghệ: Xử lý chống nhăn, kháng khuẩn</li>
+                        <li>Thiết kế: Tối giản, hiện đại, dễ phối đồ</li>
+                        <li>Độ bền: Không phai màu, không xù lông sau nhiều lần giặt</li>
+                        <li>Xuất xứ: Việt Nam - Công nghệ Nhật Bản</li>
+                    </ul>
+
+                    <h4>Hướng dẫn sử dụng:</h4>
+                    <ul>
+                        <li>Giặt máy ở nhiệt độ thường (dưới 40°C)</li>
+                        <li>Không sử dụng chất tẩy mạnh</li>
+                        <li>Phơi nơi thoáng mát, tránh ánh nắng trực tiếp</li>
+                        <li>Là ở nhiệt độ trung bình</li>
+                    </ul>
+                </div>
+
+                <div id="specifications" class="tab-content">
+                    <h3>Thông số kỹ thuật</h3>
+                    <table class="specifications-table">
+                        <tr>
+                            <td>Chất liệu</td>
+                            <td>100% Cotton Premium</td>
+                        </tr>
+                        <tr>
+                            <td>Trọng lượng vải</td>
+                            <td>220 GSM</td>
+                        </tr>
+                        <tr>
+                            <td>Kiểu dáng</td>
+                            <td>Regular Fit</td>
+                        </tr>
+                        <tr>
+                            <td>Màu sắc</td>
+                            <td>Đen, Trắng, Xanh Navy, Xám, Xanh Dương</td>
+                        </tr>
+                        <tr>
+                            <td>Size</td>
+                            <td>S, M, L, XL, XXL</td>
+                        </tr>
+                        <tr>
+                            <td>Xuất xứ</td>
+                            <td>Việt Nam</td>
+                        </tr>
+                        <tr>
+                            <td>Thương hiệu</td>
+                            <td>E-Shop Premium</td>
+                        </tr>
+                        <tr>
+                            <td>Bảo hành</td>
+                            <td>12 tháng</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="reviews" class="tab-content">
+                    <div class="reviews-summary">
+                        <div class="overall-rating">
+                            <div class="rating-score">4.5</div>
+                            <div class="rating-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <div class="rating-count">248 đánh giá</div>
+                        </div>
+                        <div class="rating-breakdown">
+                            <div class="rating-bar">
+                                <span>5 <i class="fas fa-star"></i></span>
+                                <div class="bar">
+                                    <div class="fill" style="width: 70%"></div>
+                                </div>
+                                <span>174</span>
+                            </div>
+                            <div class="rating-bar">
+                                <span>4 <i class="fas fa-star"></i></span>
+                                <div class="bar">
+                                    <div class="fill" style="width: 20%"></div>
+                                </div>
+                                <span>50</span>
+                            </div>
+                            <div class="rating-bar">
+                                <span>3 <i class="fas fa-star"></i></span>
+                                <div class="bar">
+                                    <div class="fill" style="width: 7%"></div>
+                                </div>
+                                <span>17</span>
+                            </div>
+                            <div class="rating-bar">
+                                <span>2 <i class="fas fa-star"></i></span>
+                                <div class="bar">
+                                    <div class="fill" style="width: 2%"></div>
+                                </div>
+                                <span>5</span>
+                            </div>
+                            <div class="rating-bar">
+                                <span>1 <i class="fas fa-star"></i></span>
+                                <div class="bar">
+                                    <div class="fill" style="width: 1%"></div>
+                                </div>
+                                <span>2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reviews-list">
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <img src="https://via.placeholder.com/50/4A90E2/ffffff?text=NV" alt="Reviewer">
+                                    <div>
+                                        <h4>Nguyễn Văn A</h4>
+                                        <div class="review-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="review-date">15/02/2025</span>
+                            </div>
+                            <div class="review-content">
+                                <p class="review-variant">Phân loại: Đen, Size M</p>
+                                <p>Chất lượng áo rất tốt, vải mềm mịn, mặc rất thoải mái. Giao hàng nhanh, đóng gói cẩn thận. Sẽ ủng hộ shop tiếp!</p>
+                                <div class="review-images">
+                                    <img src="https://via.placeholder.com/100/4A90E2/ffffff?text=Review" alt="Review">
+                                    <img src="https://via.placeholder.com/100/50C878/ffffff?text=Review" alt="Review">
+                                </div>
+                            </div>
+                            <div class="review-helpful">
+                                <button><i class="far fa-thumbs-up"></i> Hữu ích (24)</button>
+                            </div>
+                        </div>
+
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <img src="https://via.placeholder.com/50/FF6B6B/ffffff?text=TM" alt="Reviewer">
+                                    <div>
+                                        <h4>Trần Minh B</h4>
+                                        <div class="review-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="far fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="review-date">10/02/2025</span>
+                            </div>
+                            <div class="review-content">
+                                <p class="review-variant">Phân loại: Trắng, Size L</p>
+                                <p>Áo đẹp, form chuẩn. Tuy nhiên giá hơi cao so với thị trường. Nhưng chất lượng xứng đáng với giá tiền.</p>
+                            </div>
+                            <div class="review-helpful">
+                                <button><i class="far fa-thumbs-up"></i> Hữu ích (12)</button>
+                            </div>
+                        </div>
+
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <img src="https://via.placeholder.com/50/50C878/ffffff?text=LH" alt="Reviewer">
+                                    <div>
+                                        <h4>Lê Hoàng C</h4>
+                                        <div class="review-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="review-date">05/02/2025</span>
+                            </div>
+                            <div class="review-content">
+                                <p class="review-variant">Phân loại: Xanh Navy, Size XL</p>
+                                <p>Rất hài lòng với sản phẩm. Vải cotton mềm mại, thấm hút tốt. Mặc cả ngày không bị bí. Đã mua 3 cái luôn!</p>
+                            </div>
+                            <div class="review-helpful">
+                                <button><i class="far fa-thumbs-up"></i> Hữu ích (18)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-load-more">Xem thêm đánh giá</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Products -->
+    <section class="related-products">
+        <div class="container">
+            <h2 class="section-title">Sản phẩm tương tự</h2>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x350/4A90E2/ffffff?text=Product" alt="Product">
+                        <span class="badge-sale">-25%</span>
+                    </div>
+                    <div class="product-details">
+                        <h3>Áo Thun Basic Cotton</h3>
+                        <div class="price">
+                            <span class="current">299.000₫</span>
+                            <span class="original">399.000₫</span>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <span>4.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x350/50C878/ffffff?text=Product" alt="Product">
+                        <span class="badge-new">Mới</span>
+                    </div>
+                    <div class="product-details">
+                        <h3>Áo Polo Nam Cao Cấp</h3>
+                        <div class="price">
+                            <span class="current">449.000₫</span>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                            <span>4.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x350/FF6B6B/ffffff?text=Product" alt="Product">
+                    </div>
+                    <div class="product-details">
+                        <h3>Áo Sơ Mi Oxford</h3>
+                        <div class="price">
+                            <span class="current">549.000₫</span>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <span>4.2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x350/FFD93D/ffffff?text=Product" alt="Product">
+                        <span class="badge-sale">-15%</span>
+                    </div>
+                    <div class="product-details">
+                        <h3>Áo Khoác Hoodie</h3>
+                        <div class="price">
+                            <span class="current">679.000₫</span>
+                            <span class="original">799.000₫</span>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <span>5.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="fashion-footer">
+        <div class="container fashion-footer__grid">
+            <div>
+                <a href="../index.html" class="fashion-logo footer-logo">
+                    <span class="fashion-logo__mark">M</span>
+                    <span>
+                        <strong>Modeva</strong>
+                        <small>Fashion Commerce</small>
+                    </span>
+                </a>
+                <p>Thiết kế mua sắm thời trang hiện đại, trải nghiệm liền mạch từ khám phá đến thanh toán.</p>
+            </div>
+            <div>
+                <h4>Danh mục</h4>
+                <a href="catalog.html">Nam</a>
+                <a href="catalog.html">Nữ</a>
+                <a href="catalog.html">Phụ kiện</a>
+            </div>
+            <div>
+                <h4>Hỗ trợ</h4>
+                <a href="customer-care.html">Trung tâm khách hàng</a>
+                <a href="#">Chính sách đổi trả</a>
+                <a href="#">Phương thức thanh toán</a>
+            </div>
+            <div>
+                <h4>Liên hệ</h4>
+                <p>support@modeva.vn</p>
+                <p>1900 1234</p>
+                <p>Hà Nội, Việt Nam</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi | Modeva 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page fashion-order-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Order Space</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="../index.html">Trang chủ</a>
+                <a href="catalog.html">Danh mục</a>
+                <a href="customer-care.html">Hỗ trợ</a>
+                <a href="account.html">Tài khoản</a>
+                <a href="order-tracking.html" class="active">Đơn hàng</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="account.html" class="fashion-icon-link" aria-label="Tài khoản">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="cart.html" class="fashion-icon-link" aria-label="Giỏ hàng">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span class="badge">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="order-hero-modern">
+            <div class="container">
+                <span class="eyebrow">Theo dõi đơn hàng</span>
+                <h1>Đây là toàn bộ đơn hàng của bạn</h1>
+                <p>Xem trạng thái theo thời gian thực, kiểm tra chi tiết từng đơn và thao tác nhanh chỉ trong vài chạm.</p>
+            </div>
+        </section>
+
+        <section class="order-tracking-section">
+            <div class="container">
+                <div id="orderGuestGate" class="order-guest-gate">
+                    <div class="order-guest-gate__inner">
+                        <i class="fas fa-user-lock"></i>
+                        <h2>Đăng nhập để xem đơn hàng</h2>
+                        <p>Đơn hàng mặc định là <strong>0</strong>. Chỉ khi bạn <strong>đăng nhập</strong>, thêm sản phẩm vào giỏ và <strong>đặt hàng thành công</strong> thì đơn mới được lưu và hiển thị tại đây.</p>
+                        <a href="account.html" class="btn btn-primary-modern">Đăng nhập / Đăng ký</a>
+                    </div>
+                </div>
+
+                <div id="orderTrackingAuthenticated" class="order-tracking-auth" hidden>
+                <div class="tracking-wrapper">
+                    <aside class="account-sidebar">
+                        <div class="account-info">
+                            <div class="avatar avatar--initial" id="orderSidebarAvatar">M</div>
+                            <h3 id="orderSidebarName">—</h3>
+                            <p id="orderSidebarEmail">—</p>
+                            <span class="profile-tier">Thành viên</span>
+                        </div>
+                        <nav class="account-menu">
+                            <a href="account.html" class="menu-item"><i class="fas fa-user"></i><span>Thông tin tài khoản</span></a>
+                            <a href="order-tracking.html" class="menu-item active"><i class="fas fa-box"></i><span>Đơn hàng của tôi</span></a>
+                            <a href="customer-care.html" class="menu-item"><i class="fas fa-headset"></i><span>Trung tâm hỗ trợ</span></a>
+                            <a href="account.html#addresses" class="menu-item"><i class="fas fa-map-marker-alt"></i><span>Sổ địa chỉ</span></a>
+                            <a href="#" class="menu-item" onclick="return false"><i class="fas fa-heart"></i><span>Sản phẩm yêu thích</span></a>
+                            <a href="#" class="menu-item" onclick="return false"><i class="fas fa-bell"></i><span>Thông báo</span></a>
+                            <a href="account.html" class="menu-item" id="orderSidebarLogout"><i class="fas fa-sign-out-alt"></i><span>Đăng xuất</span></a>
+                        </nav>
+                    </aside>
+
+                    <div class="tracking-content">
+                        <div class="content-header">
+                            <h1>Đơn hàng của tôi</h1>
+                            <div class="order-search">
+                                <input type="text" id="orderSearchInput" placeholder="Tìm kiếm theo mã đơn hàng...">
+                                <button type="button" id="orderSearchBtn" aria-label="Tìm kiếm"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="order-tabs">
+                            <button type="button" class="tab-btn active" data-tab="all" onclick="filterOrders('all', this)">Tất cả <span class="count">0</span></button>
+                            <button type="button" class="tab-btn" data-tab="processing" onclick="filterOrders('processing', this)">Đang xử lý <span class="count">0</span></button>
+                            <button type="button" class="tab-btn" data-tab="shipping" onclick="filterOrders('shipping', this)">Đang giao <span class="count">0</span></button>
+                            <button type="button" class="tab-btn" data-tab="delivered" onclick="filterOrders('delivered', this)">Đã giao <span class="count">0</span></button>
+                            <button type="button" class="tab-btn" data-tab="cancelled" onclick="filterOrders('cancelled', this)">Đã hủy <span class="count">0</span></button>
+                        </div>
+
+                        <div class="orders-list" id="ordersListMount"></div>
+
+                        <div class="empty-orders" id="ordersEmptyState" style="display: none;">
+                            <i class="fas fa-box-open"></i>
+                            <h3>Chưa có đơn hàng nào</h3>
+                            <p>Đăng nhập, thêm sản phẩm vào giỏ và hoàn tất thanh toán để tạo đơn đầu tiên.</p>
+                            <a href="catalog.html" class="btn btn-primary-modern">Khám phá sản phẩm</a>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="fashion-footer">
+        <div class="container fashion-footer__grid">
+            <div>
+                <a href="../index.html" class="fashion-logo footer-logo">
+                    <span class="fashion-logo__mark">M</span>
+                    <span>
+                        <strong>Modeva</strong>
+                        <small>Fashion Commerce</small>
+                    </span>
+                </a>
+                <p>Nâng cấp trải nghiệm mua sắm thời trang với không gian quản lý đơn hàng rõ ràng và trực quan.</p>
+            </div>
+            <div>
+                <h4>Danh mục</h4>
+                <a href="catalog.html">Nam</a>
+                <a href="catalog.html">Nữ</a>
+                <a href="catalog.html">Phụ kiện</a>
+            </div>
+            <div>
+                <h4>Hỗ trợ</h4>
+                <a href="customer-care.html">Trung tâm khách hàng</a>
+                <a href="#">Chính sách đổi trả</a>
+                <a href="#">Hướng dẫn theo dõi đơn</a>
+            </div>
+            <div>
+                <h4>Liên hệ</h4>
+                <p>support@modeva.vn</p>
+                <p>1900 1234</p>
+                <p>Hà Nội, Việt Nam</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal" id="orderDetailModal">
+        <div class="modal-content large">
+            <button class="modal-close" onclick="closeModal()" aria-label="Đóng chi tiết đơn hàng">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <h2>Chi tiết đơn hàng #ĐH123456</h2>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/order-tracking.js"></script>
+</body>
+</html>

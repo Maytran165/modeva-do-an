@@ -1,0 +1,245 @@
+{
+  "_meta": {
+    "purpose": "Anonymized demo snapshot for Modeva (front-end only, localStorage)",
+    "generatedAt": "2026-03-25T00:00:00.000Z",
+    "pii": "removed",
+    "notes": [
+      "Emails/phones/addresses are anonymized.",
+      "Product prices/variants remain intact for grading/demo.",
+      "OTP/EmailJS keys are NOT included."
+    ]
+  },
+  "localStorage": {
+    "modeva_auth_users": {
+      "admin@modeva.vn": {
+        "passwordHash": "48724d2be291209747f932bb6046b979eceec14e569403cff13add133c3c0c2f",
+        "role": "admin",
+        "name": "Quản trị viên"
+      },
+      "staff@modeva.vn": {
+        "passwordHash": "da978c74838a8ff795dfca7a90cda5a14bff4b584e7f8949ca89daa7c28cf421",
+        "role": "staff",
+        "name": "Nhân viên bán hàng",
+        "staffPosition": "sales"
+      },
+      "customer1@demo.local": {
+        "passwordHash": "2e11ed22e46082ed33cd5f7a83a9bf30d8fd31ebf5f07b9ca0d4a0235875f2d5",
+        "role": "customer",
+        "name": "Khách hàng 1",
+        "phone": "0900000001"
+      },
+      "customer2@demo.local": {
+        "passwordHash": "2e11ed22e46082ed33cd5f7a83a9bf30d8fd31ebf5f07b9ca0d4a0235875f2d5",
+        "role": "customer",
+        "name": "Khách hàng 2",
+        "phone": "0900000002"
+      }
+    },
+    "modeva_customer_profiles": {
+      "customer1@demo.local": {
+        "ordersCompleted": 2,
+        "addressesSaved": 2,
+        "vouchers": [
+          { "id": "wv-15", "code": "WELCOME15", "percent": 15, "maxDiscount": 200000, "minOrder": 1000000, "used": false },
+          { "id": "wv-30", "code": "WELCOME30", "percent": 30, "maxDiscount": 500000, "minOrder": 5000000, "used": false }
+        ]
+      },
+      "customer2@demo.local": {
+        "ordersCompleted": 1,
+        "addressesSaved": 1,
+        "vouchers": [
+          { "id": "wv-15", "code": "WELCOME15", "percent": 15, "maxDiscount": 200000, "minOrder": 1000000, "used": true },
+          { "id": "wv-30", "code": "WELCOME30", "percent": 30, "maxDiscount": 500000, "minOrder": 5000000, "used": false }
+        ]
+      }
+    },
+    "modeva_customer_orders": {
+      "customer1@demo.local": [
+        {
+          "orderId": "ĐH100001",
+          "status": "processing",
+          "createdAt": "2026-03-22T09:12:00.000Z",
+          "total": 1780000,
+          "subtotal": 1750000,
+          "discount": 0,
+          "shipping": 30000,
+          "paymentMethod": "cod",
+          "deliveryMethod": "standard",
+          "note": "",
+          "items": [
+            { "name": "Áo sơ mi linen", "variant": "Màu: Trắng | Size: M", "qty": 1, "price": 690000, "image": "" },
+            { "name": "Quần tây slim", "variant": "Màu: Đen | Size: 32", "qty": 1, "price": 1090000, "image": "" }
+          ],
+          "customer": {
+            "fullName": "Khách hàng 1",
+            "phone": "0900000001",
+            "email": "customer1@demo.local",
+            "address": {
+              "province": "Hà Nội",
+              "district": "Cầu Giấy",
+              "ward": "Dịch Vọng",
+              "address": "[ẨN] Số nhà/đường"
+            }
+          }
+        },
+        {
+          "orderId": "ĐH100002",
+          "status": "delivered",
+          "createdAt": "2026-03-20T15:05:00.000Z",
+          "total": 1290000,
+          "subtotal": 1260000,
+          "discount": 0,
+          "shipping": 30000,
+          "paymentMethod": "bank",
+          "deliveryMethod": "fast",
+          "note": "Giao giờ hành chính",
+          "items": [
+            { "name": "Váy midi lụa", "variant": "Màu: Hồng | Size: S", "qty": 1, "price": 1290000, "image": "" }
+          ],
+          "customer": {
+            "fullName": "Khách hàng 1",
+            "phone": "0900000001",
+            "email": "customer1@demo.local",
+            "address": {
+              "province": "Hồ Chí Minh",
+              "district": "Quận 1",
+              "ward": "Bến Nghé",
+              "address": "[ẨN] Số nhà/đường"
+            }
+          }
+        }
+      ],
+      "customer2@demo.local": [
+        {
+          "orderId": "ĐH100003",
+          "status": "cancelled",
+          "createdAt": "2026-03-21T12:40:00.000Z",
+          "total": 560000,
+          "subtotal": 530000,
+          "discount": 0,
+          "shipping": 30000,
+          "paymentMethod": "cod",
+          "deliveryMethod": "standard",
+          "note": "",
+          "items": [
+            { "name": "Phụ kiện", "variant": "Màu: Đen | Size: —", "qty": 1, "price": 530000, "image": "" }
+          ],
+          "customer": {
+            "fullName": "Khách hàng 2",
+            "phone": "0900000002",
+            "email": "customer2@demo.local",
+            "address": {
+              "province": "Đà Nẵng",
+              "district": "Hải Châu",
+              "ward": "Thạch Thang",
+              "address": "[ẨN] Số nhà/đường"
+            }
+          }
+        }
+      ]
+    },
+    "modeva_dash_products": [
+      { "id": "p1", "name": "Áo sơ mi linen", "cat": "nam-ao", "sizes": ["S", "M", "L", "XL"], "colors": ["Trắng", "Be", "Đen"], "price": 890000, "salePrice": 690000, "images": 3 },
+      { "id": "p2", "name": "Quần tây slim", "cat": "nam-quan", "sizes": ["30", "32", "34"], "colors": ["Đen", "Navy"], "price": 1190000, "salePrice": null, "images": 4 },
+      { "id": "p3", "name": "Váy midi lụa", "cat": "nu-vay", "sizes": ["S", "M", "L"], "colors": ["Hồng", "Đen"], "price": 1590000, "salePrice": 1290000, "images": 5 }
+    ],
+    "modeva_dash_categories": [
+      { "id": "nam", "name": "Thời trang Nam", "parent": null },
+      { "id": "nam-ao", "name": "Áo nam", "parent": "nam" },
+      { "id": "nam-quan", "name": "Quần nam", "parent": "nam" },
+      { "id": "nu", "name": "Thời trang Nữ", "parent": null },
+      { "id": "nu-ao", "name": "Áo nữ", "parent": "nu" },
+      { "id": "nu-vay", "name": "Váy", "parent": "nu" }
+    ],
+    "modeva_dash_inventory": [
+      { "id": "i1", "productId": "p1", "sku": "P1-M-TR", "size": "M", "color": "Trắng", "qty": 24, "min": 5 },
+      { "id": "i2", "productId": "p1", "sku": "P1-L-BE", "size": "L", "color": "Be", "qty": 3, "min": 5 },
+      { "id": "i3", "productId": "p2", "sku": "P2-32-DEN", "size": "32", "color": "Đen", "qty": 0, "min": 4 },
+      { "id": "i4", "productId": "p3", "sku": "P3-S-HONG", "size": "S", "color": "Hồng", "qty": 18, "min": 6 }
+    ],
+    "modeva_dash_orders": [
+      {
+        "id": "ĐH100001",
+        "customer": "Khách hàng 1",
+        "email": "customer1@demo.local",
+        "phone": "0900000001",
+        "total": 1780000,
+        "subtotal": 1750000,
+        "discount": 0,
+        "shipping": 30000,
+        "status": "processing",
+        "date": "2026-03-22",
+        "items": "Áo sơ mi linen ×1, Quần tây slim ×1",
+        "lineItems": [
+          { "name": "Áo sơ mi linen", "variant": "Màu: Trắng | Size: M", "qty": 1, "unitPrice": 690000, "lineTotal": 690000 },
+          { "name": "Quần tây slim", "variant": "Màu: Đen | Size: 32", "qty": 1, "unitPrice": 1090000, "lineTotal": 1090000 }
+        ],
+        "address": { "province": "Hà Nội", "district": "Cầu Giấy", "ward": "Dịch Vọng", "address": "[ẨN] Số nhà/đường" },
+        "paymentMethod": "cod",
+        "deliveryMethod": "standard",
+        "note": ""
+      },
+      {
+        "id": "ĐH100002",
+        "customer": "Khách hàng 1",
+        "email": "customer1@demo.local",
+        "phone": "0900000001",
+        "total": 1290000,
+        "subtotal": 1260000,
+        "discount": 0,
+        "shipping": 30000,
+        "status": "completed",
+        "date": "2026-03-20",
+        "items": "Váy midi lụa ×1",
+        "lineItems": [
+          { "name": "Váy midi lụa", "variant": "Màu: Hồng | Size: S", "qty": 1, "unitPrice": 1290000, "lineTotal": 1290000 }
+        ],
+        "address": { "province": "Hồ Chí Minh", "district": "Quận 1", "ward": "Bến Nghé", "address": "[ẨN] Số nhà/đường" },
+        "paymentMethod": "bank",
+        "deliveryMethod": "fast",
+        "note": "Giao giờ hành chính"
+      },
+      {
+        "id": "ĐH100003",
+        "customer": "Khách hàng 2",
+        "email": "customer2@demo.local",
+        "phone": "0900000002",
+        "total": 560000,
+        "subtotal": 530000,
+        "discount": 0,
+        "shipping": 30000,
+        "status": "cancelled",
+        "date": "2026-03-21",
+        "items": "Phụ kiện ×1",
+        "lineItems": [
+          { "name": "Phụ kiện", "variant": "Màu: Đen | Size: —", "qty": 1, "unitPrice": 530000, "lineTotal": 530000 }
+        ],
+        "address": { "province": "Đà Nẵng", "district": "Hải Châu", "ward": "Thạch Thang", "address": "[ẨN] Số nhà/đường" },
+        "paymentMethod": "cod",
+        "deliveryMethod": "standard",
+        "note": ""
+      }
+    ],
+    "modeva_dash_customers": [
+      { "id": "c1", "name": "Khách hàng 1", "email": "customer1@demo.local", "tier": "regular", "orders": 2, "spent": 3070000 },
+      { "id": "c2", "name": "Khách hàng 2", "email": "customer2@demo.local", "tier": "regular", "orders": 1, "spent": 560000 }
+    ],
+    "modeva_dash_promos": {
+      "coupons": [
+        { "code": "MODEVA20", "type": "percent", "value": 20, "expiry": "2026-04-30", "active": true },
+        { "code": "FREESHIP", "type": "ship", "value": 0, "expiry": "2026-03-31", "active": true }
+      ],
+      "flashSales": [
+        { "id": "fs1", "title": "Flash áo sơ mi", "start": "2026-03-25T08:00", "end": "2026-03-25T23:59", "discount": 15 }
+      ],
+      "combos": [
+        { "id": "cb1", "name": "Set công sở", "productIds": ["p1", "p2"], "price": 1890000, "note": "Tiết kiệm 12%" }
+      ]
+    },
+    "modeva_dash_logs": [
+      { "at": "2026-03-25T00:00:00.000Z", "level": "info", "message": "Snapshot demo (ẩn danh) đã được nạp", "user": "system" }
+    ],
+    "modeva_dash_inventory_losses": []
+  }
+}
+

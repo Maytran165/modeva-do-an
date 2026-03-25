@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh mục sản phẩm | Modeva 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page fashion-catalog-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Catalog Studio</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="../index.html">Trang chủ</a>
+                <a href="catalog.html" class="active">Danh mục</a>
+                <a href="customer-care.html">Hỗ trợ</a>
+                <a href="account.html">Tài khoản</a>
+                <a href="cart.html">Giỏ hàng</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <form class="fashion-search catalog-search-header">
+                    <i class="fas fa-search"></i>
+                    <input type="search" id="catalogSearch" placeholder="Tìm theo tên sản phẩm, chất liệu, collection...">
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="catalog-shell">
+        <section class="catalog-hero">
+            <div class="container catalog-hero__content">
+                <div>
+                    <span class="eyebrow"> Danh mục & tìm kiếm sản phẩm</span>
+                    <h1>Thời trang nam, nữ và trẻ em hiện đại và phong cách.</h1>
+                    <p>Hỗ trợ duyệt theo danh mục, giá, size, màu sắc; tìm kiếm theo từ khóa; sắp xếp theo nổi bật, mới nhất và giá.</p>
+                </div>
+                <div class="catalog-hero__stats">
+                    <article>
+                        <strong id="productCount">0</strong>
+                        <span>sản phẩm hiển thị</span>
+                    </article>
+                    <article>
+                        <strong>08</strong>
+                        <span>bộ lọc có sẵn</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="catalog-layout">
+            <div class="container catalog-layout__grid">
+                <aside class="filter-sidebar">
+                    <div class="filter-card">
+                        <div class="filter-card__header">
+                            <h2>Bộ lọc</h2>
+                            <button type="button" class="text-link" id="clearFilters">Xóa tất cả</button>
+                        </div>
+
+                        <div class="filter-group">
+                            <h3>Danh mục</h3>
+                            <label><input type="checkbox" value="men" data-filter="category"> Nam</label>
+                            <label><input type="checkbox" value="women" data-filter="category"> Nữ</label>
+                            <label><input type="checkbox" value="kids" data-filter="category"> Trẻ em</label>
+                            <label><input type="checkbox" value="accessories" data-filter="category"> Phụ kiện</label>
+                        </div>
+
+                        <div class="filter-group">
+                            <h3>Mức giá</h3>
+                            <label><input type="checkbox" value="0-500000" data-filter="price"> Dưới 500.000₫</label>
+                            <label><input type="checkbox" value="500000-1000000" data-filter="price"> 500.000₫ - 1.000.000₫</label>
+                            <label><input type="checkbox" value="1000000-2000000" data-filter="price"> 1.000.000₫ - 2.000.000₫</label>
+                        </div>
+
+                        <div class="filter-group">
+                            <h3>Size</h3>
+                            <div class="chip-row">
+                                <label class="filter-chip"><input type="checkbox" value="S" data-filter="size"><span>S</span></label>
+                                <label class="filter-chip"><input type="checkbox" value="M" data-filter="size"><span>M</span></label>
+                                <label class="filter-chip"><input type="checkbox" value="L" data-filter="size"><span>L</span></label>
+                                <label class="filter-chip"><input type="checkbox" value="XL" data-filter="size"><span>XL</span></label>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <h3>Màu sắc</h3>
+                            <div class="color-filter-row">
+                                <label class="color-swatch black"><input type="checkbox" value="black" data-filter="color"><span></span></label>
+                                <label class="color-swatch white"><input type="checkbox" value="white" data-filter="color"><span></span></label>
+                                <label class="color-swatch beige"><input type="checkbox" value="beige" data-filter="color"><span></span></label>
+                                <label class="color-swatch blue"><input type="checkbox" value="blue" data-filter="color"><span></span></label>
+                                <label class="color-swatch red"><input type="checkbox" value="red" data-filter="color"><span></span></label>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="catalog-main">
+                    <div class="catalog-toolbar">
+                        <button type="button" class="mobile-filter-toggle">
+                            <i class="fas fa-sliders"></i> Bộ lọc
+                        </button>
+                        <div class="active-filters" id="activeFilters">
+                            <span class="active-filter-label">Bộ lọc đang dùng:</span>
+                        </div>
+                        <label class="sort-control">
+                            <span>Sắp xếp</span>
+                            <select id="sortSelect">
+                                <option value="featured">Nổi bật</option>
+                                <option value="newest">Mới nhất</option>
+                                <option value="price-asc">Giá tăng dần</option>
+                                <option value="price-desc">Giá giảm dần</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="catalog-grid" id="catalogGrid"></div>
+
+                    <div class="catalog-empty-state" id="catalogEmptyState" hidden>
+                        <h3>Không tìm thấy sản phẩm phù hợp</h3>
+                        <p>Hãy thử nới rộng khoảng giá, bỏ bớt filter hoặc thay từ khóa tìm kiếm.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/catalog-sync.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

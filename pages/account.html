@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản | Modeva 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page fashion-account-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Member Space</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="../index.html">Trang chủ</a>
+                <a href="catalog.html">Danh mục</a>
+                <a href="customer-care.html">Hỗ trợ</a>
+                <a href="account.html" class="active">Tài khoản</a>
+                <a href="order-tracking.html">Đơn hàng</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="cart.html" class="fashion-icon-link" aria-label="Giỏ hàng">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span class="badge"></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="account-shell">
+        <section class="account-hero">
+            <div class="container account-hero__grid">
+                <div class="account-hero__copy">
+                    <span class="eyebrow"> Tài khoản người dùng</span>
+                    <div class="account-benefits">
+                        <article>
+                            <i class="fas fa-sparkles"></i>
+                            <span>Ưu tiên vào bộ sưu tập mới</span>
+                        </article>
+                        <article>
+                            <i class="fas fa-location-dot"></i>
+                            <span>Lưu nhiều địa chỉ giao hàng</span>
+                        </article>
+                        <article>
+                            <i class="fas fa-receipt"></i>
+                            <span>Theo dõi đơn hàng theo hồ sơ</span>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="auth-card">
+                    <div class="auth-tabs">
+                        <button class="auth-tab is-active" data-auth-target="login">Đăng nhập</button>
+                        <button class="auth-tab" data-auth-target="register">Đăng ký</button>
+                        <button class="auth-tab" data-auth-target="forgot">Quên mật khẩu</button>
+                    </div>
+                    <p class="form-hint otp-config-banner" id="otpEmailServiceHint" hidden></p>
+
+                    <div class="auth-panel is-active" id="login">
+                        <h2>Đăng nhập thành viên</h2>
+                        <p class="form-hint auth-demo-hint">
+                            <strong>Demo nội bộ:</strong><br>
+                            Admin — <code>admin@modeva.vn</code> / <code>Admin@123*</code> → bảng quản trị.<br>
+                            Staff — <code>staff@modeva.vn</code> / <code>Staff@123*</code> → bảng nhân viên.<br>
+                            Khách — <code>customer@modeva.vn</code> / <code>Customer@123*</code> → khu vực thành viên bên dưới.
+                        </p>
+                        <form class="auth-form" id="loginForm">
+                            <label>Email hoặc số điện thoại
+                                <input type="text" id="loginIdentifier" placeholder="you@modeva.vn" required autocomplete="username">
+                            </label>
+                            <label>Mật khẩu
+                                <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" required autocomplete="current-password">
+                            </label>
+                            <div class="auth-form__meta">
+                                <label><input type="checkbox"> Ghi nhớ phiên đăng nhập</label>
+                                <button type="button" class="text-link" data-auth-target="forgot">Quên mật khẩu?</button>
+                            </div>
+                            <button class="btn btn-primary-modern" type="submit">Đăng nhập</button>
+                        </form>
+                    </div>
+
+                    <div class="auth-panel" id="register">
+                        <h2>Tạo tài khoản mới</h2>
+                        <p class="form-hint">Sau khi đăng ký bạn nhận <strong>2 voucher</strong>: giảm 15% (tối đa 200.000đ, đơn từ 1.000.000đ) và giảm 30% (tối đa 500.000đ, đơn từ 5.000.000đ).</p>
+                        <form class="auth-form" id="registerForm" onsubmit="return handleRegisterSubmit(event)">
+                            <div class="grid-two">
+                                <label>Họ và tên
+                                    <input type="text" id="registerName" placeholder="Nguyễn Văn A" required autocomplete="name">
+                                </label>
+                                <label>Số điện thoại
+                                    <input type="tel" id="registerPhone" placeholder="10 chữ số, VD: 0901234567" required autocomplete="tel" inputmode="numeric" title="Nhập đúng 10 chữ số">
+                                </label>
+                            </div>
+                            <label>Email
+                                <input type="email" id="registerEmail" placeholder="tenban@gmail.com" required autocomplete="email" title="Bắt buộc dùng email @gmail.com">
+                            </label>
+                            <div class="otp-send-row">
+                                <button type="button" class="btn btn-secondary-modern" id="btnSendRegisterOtp">Gửi mã OTP tới email</button>
+                                <span class="otp-timer" id="registerOtpTimer" hidden></span>
+                            </div>
+                            <p class="form-hint otp-demo-hint" id="registerOtpHint" hidden></p>
+                            <label>Mã OTP (trong email)
+                                <input type="text" id="registerOtp" inputmode="numeric" maxlength="8" placeholder="6 chữ số" autocomplete="one-time-code">
+                            </label>
+                            <div class="grid-two">
+                                <label>Mật khẩu
+                                    <input type="password" id="registerPassword" placeholder="≥8 ký tự: A-Z, a-z, số, ký tự @ # * (không dùng . ,)" minlength="8" required>
+                                </label>
+                                <label>Xác nhận mật khẩu
+                                    <input type="password" id="registerConfirmPassword" placeholder="Nhập lại mật khẩu" minlength="8" required>
+                                </label>
+                            </div>
+                            <label><input type="checkbox" required> Tôi đồng ý với điều khoản thành viên và chính sách dữ liệu.</label>
+                            <button class="btn btn-primary-modern" type="submit">Tạo tài khoản</button>
+                        </form>
+                    </div>
+
+                    <div class="auth-panel" id="forgot">
+                        <h2>Khôi phục mật khẩu</h2>
+                        <p class="form-hint">Nhập email đã đăng ký → nhận <strong>mã OTP</strong> → nhập mã và mật khẩu mới.</p>
+                        <form class="auth-form" id="forgotPasswordForm" onsubmit="return false;">
+                            <label>Email đăng ký
+                                <input type="email" id="forgotEmail" placeholder="tenban@gmail.com" required autocomplete="email">
+                            </label>
+                            <div class="otp-send-row">
+                                <button type="button" class="btn btn-secondary-modern" id="btnSendForgotOtp">Gửi mã OTP tới email</button>
+                                <span class="otp-timer" id="forgotOtpTimer" hidden></span>
+                            </div>
+                            <p class="form-hint otp-demo-hint" id="forgotOtpHint" hidden></p>
+                            <label>Mã OTP
+                                <input type="text" id="forgotOtp" inputmode="numeric" maxlength="8" placeholder="6 chữ số" autocomplete="one-time-code">
+                            </label>
+                            <div class="grid-two">
+                                <label>Mật khẩu mới
+                                    <input type="password" id="forgotNewPassword" placeholder="≥8 ký tự, A-Z, a-z, số, @ # *" minlength="8" autocomplete="new-password">
+                                </label>
+                                <label>Xác nhận mật khẩu
+                                    <input type="password" id="forgotConfirmPassword" placeholder="Nhập lại" minlength="8" autocomplete="new-password">
+                                </label>
+                            </div>
+                            <button type="button" class="btn btn-primary-modern" id="btnForgotReset">Đặt lại mật khẩu</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-dashboard" id="profile" hidden>
+            <div class="container profile-dashboard__grid">
+                <aside class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="profile-avatar">NT</div>
+                        <h3>Nguyễn Văn A</h3>
+                        <p>modeva.member@example.com</p>
+                        <span class="profile-tier">Thành viên</span>
+                    </div>
+                    <div class="profile-menu">
+                        <button class="profile-menu__item is-active" data-account-target="overview">Tổng quan</button>
+                        <button class="profile-menu__item" data-account-target="personal">Thông tin cá nhân</button>
+                        <button class="profile-menu__item" data-account-target="addresses">Địa chỉ giao hàng</button>
+                        <button class="profile-menu__item" data-account-target="security">Bảo mật</button>
+                    </div>
+                </aside>
+
+                <div class="profile-content">
+                    <section class="account-section is-active" id="overview">
+                        <div class="section-heading modern-heading">
+                            <div>
+                                <span class="eyebrow">Thông tin khách hàng </span>
+                                <h2>Các chi tiết thông tin </h2>
+                            </div>
+                        </div>
+                        <div class="account-stat-grid">
+                            <article>
+                                <strong id="statOrdersCompleted">0</strong>
+                                <span>Đơn hàng hoàn tất</span>
+                            </article>
+                            <article>
+                                <strong id="statVouchersCount">0</strong>
+                                <span>Voucher còn hiệu lực</span>
+                            </article>
+                            <article>
+                                <strong id="statAddressesSaved">0</strong>
+                                <span>Địa chỉ giao hàng đã lưu</span>
+                            </article>
+                        </div>
+                        <div class="customer-voucher-box">
+                            <h3 class="customer-voucher-box__title">Voucher của bạn</h3>
+                            <ul id="customerVoucherList" class="customer-voucher-list"></ul>
+                        </div>
+                        <div id="memberPromoExclusive" class="account-member-promo" hidden>
+                            <div class="account-highlight-card">
+                                <h3>Ưu đãi dành riêng cho thành viên</h3>
+                                <p>Mở sớm capsule “Weekend Glow”, giảm thêm 10% cho đơn phụ kiện khi thanh toán trước 23:59 hôm nay.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="account-section" id="personal">
+                        <div class="section-heading modern-heading">
+                            <div>
+                                <span class="eyebrow">Cập nhật thông tin cá nhân</span>
+                                <h2>Hồ sơ cá nhân</h2>
+                            </div>
+                        </div>
+                        <form class="profile-form" onsubmit="return handleProfileSubmit(event)">
+                            <div class="grid-two">
+                                <label>Họ tên
+                                    <input type="text" id="profileFullName" value="" required>
+                                </label>
+                                <label>Số điện thoại
+                                    <input type="tel" id="profilePhone" value="" required autocomplete="tel" inputmode="numeric" placeholder="10 chữ số, VD: 0901234567" title="Nhập đúng 10 chữ số">
+                                </label>
+                            </div>
+                            <div class="grid-two">
+                                <label>Email
+                                    <input type="email" id="profileEmail" value="" readonly>
+                                </label>
+                                <label>Ngày sinh
+                                    <input type="date" value="1999-09-20">
+                                </label>
+                            </div>
+                            <label>Phong cách ưa thích
+                                <input type="text" value="Minimal tailoring, monochrome, smart casual">
+                            </label>
+                            <button class="btn btn-primary-modern" type="submit">Lưu thay đổi</button>
+                        </form>
+                    </section>
+
+                    <section class="account-section" id="addresses">
+                        <div class="section-heading modern-heading">
+                            <div>
+                                <span class="eyebrow">Quản lý địa chỉ giao hàng</span>
+                                <h2>Sổ địa chỉ</h2>
+                            </div>
+                            <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã mở biểu mẫu thêm địa chỉ')">Thêm địa chỉ mới</button>
+                        </div>
+                        <div id="customerAddressBlock" class="customer-address-block"></div>
+                    </section>
+
+                    <section class="account-section" id="security">
+                        <div class="section-heading modern-heading">
+                            <div>
+                                <span class="eyebrow">Bảo mật & đăng xuất</span>
+                                <h2>Cài đặt tài khoản</h2>
+                            </div>
+                        </div>
+                        <div class="security-list">
+                            <article>
+                                <div>
+                                    <h3>Đổi mật khẩu</h3>
+                                    <p>Khuyến nghị cập nhật định kỳ mỗi 90 ngày.</p>
+                                </div>
+                                <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã mở biểu mẫu đổi mật khẩu')">Đổi mật khẩu</button>
+                            </article>
+                            <article>
+                                <div>
+                                    <h3>Thiết bị đăng nhập</h3>
+                                    <p>Chrome Windows • iPhone Safari • MacBook Air</p>
+                                </div>
+                                <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã đăng xuất khỏi các thiết bị khác')">Đăng xuất thiết bị khác</button>
+                            </article>
+                            <article>
+                                <div>
+                                    <h3>Đăng xuất</h3>
+                                    <p>Kết thúc phiên hiện tại và quay lại màn hình đăng nhập.</p>
+                                </div>
+                                <button class="btn btn-dark-modern" type="button" onclick="if(window.ModevaAuth&amp;&amp;ModevaAuth.getSession())ModevaAuth.logout();else demoAuthAction('Đăng xuất thành công')">Đăng xuất ngay</button>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/modeva-email-config.js?v=20260325b"></script>
+    <script src="../js/modeva-otp.js?v=20260325b"></script>
+    <script src="../js/main.js?v=20260325b"></script>
+    <script>
+    (function () {
+      document.addEventListener('DOMContentLoaded', function () {
+        function syncMemberPromoVisibility () {
+          var promo = document.getElementById('memberPromoExclusive');
+          var s = window.ModevaAuth && ModevaAuth.getSession();
+          if (!promo) return;
+          promo.hidden = !(s && s.role === 'customer');
+        }
+
+        if (window.ModevaAuth) {
+          ModevaAuth.syncCustomerProfileVisibility();
+        }
+        syncMemberPromoVisibility();
+
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('member') === '1') {
+          var s = window.ModevaAuth && ModevaAuth.getSession();
+          if (s && s.role === 'customer') {
+            if (window.ModevaAuth) ModevaAuth.applyCustomerDashboard();
+            setTimeout(function () {
+              var prof = document.getElementById('profile');
+              if (prof) prof.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 350);
+            if (window.showNotification) showNotification('Chào mừng, ' + s.name, 'success');
+            syncMemberPromoVisibility();
+          }
+        }
+
+        var nextPage = params.get('next');
+        if (nextPage && window.ModevaAuth) {
+          var sess = ModevaAuth.getSession();
+          if (sess) {
+            if (sess.role === 'admin' && nextPage.indexOf('admin') !== -1) {
+              window.location.replace(nextPage);
+            } else if (sess.role === 'staff' && nextPage.indexOf('staff') !== -1) {
+              window.location.replace(nextPage);
+            }
+          }
+        }
+
+        var lf = document.getElementById('loginForm');
+        if (lf) {
+          lf.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var idEl = document.getElementById('loginIdentifier');
+            var pwEl = document.getElementById('loginPassword');
+            if (!idEl || !pwEl || !window.ModevaAuth) return;
+            ModevaAuth.attemptLogin(idEl.value, pwEl.value).then(function (res) {
+              if (res.ok) {
+                if (window.showNotification) showNotification('Đăng nhập thành công', 'success');
+                setTimeout(function () {
+                  window.location.href = res.redirect;
+                }, 450);
+              } else {
+                if (window.showNotification) showNotification(res.message, 'error');
+              }
+            });
+          });
+        }
+      });
+    })();
+    </script>
+</body>
+</html>
