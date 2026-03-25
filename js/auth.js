@@ -384,6 +384,59 @@
       ];
     },
 
+    /** Lấy danh sách voucher còn dùng được của khách (ẩn voucher đã used). */
+    getActiveCustomerVouchers: function (email) {
+      var key = normalizeId(email);
+      var p = this.ensureCustomerProfile(key);
+      var list = Array.isArray(p.vouchers) ? p.vouchers : [];
+      return list.filter(function (v) { return v && !v.used; }).map(function (v) { return Object.assign({}, v); });
+    },
+
+    /**
+     * Tính giảm giá theo voucher (không tự "consume").
+     * @returns {{ ok: boolean, message?: string, discount?: number, voucher?: any }}
+     */
+    calcVoucherDiscount: function (email, code, subtotal) {
+      var key = normalizeId(email);
+      var c = String(code || '').trim().toUpperCase();
+      if (!c) return { ok: false, message: 'Vui lòng nhập mã voucher.' };
+      var p = this.ensureCustomerProfile(key);
+      var list = Array.isArray(p.vouchers) ? p.vouchers : [];
+      var v = list.find(function (x) { return x && String(x.code || '').toUpperCase() === c; });
+      if (!v) return { ok: false, message: 'Voucher không tồn tại trong tài khoản.' };
+      if (v.used) return { ok: false, message: 'Voucher này đã được sử dụng.' };
+      var sub = Number(subtotal) || 0;
+      var minOrder = Number(v.minOrder) || 0;
+      if (sub < minOrder) {
+        return { ok: false, message: 'Voucher yêu cầu đơn tối thiểu ' + moneyVi(minOrder) + '.' };
+      }
+      var percent = Number(v.percent) || 0;
+      var maxDisc = Number(v.maxDiscount) || 0;
+      var disc = Math.floor(sub * percent / 100);
+      if (maxDisc > 0) disc = Math.min(disc, maxDisc);
+      disc = Math.max(0, disc);
+      return { ok: true, discount: disc, voucher: Object.assign({}, v) };
+    },
+
+    /** Đánh dấu voucher đã sử dụng (gọi sau khi đặt hàng thành công). */
+    consumeVoucher: function (email, code) {
+      var key = normalizeId(email);
+      var c = String(code || '').trim().toUpperCase();
+      if (!c) return { ok: false, message: 'Thiếu mã voucher.' };
+      var p = this.ensureCustomerProfile(key);
+      var list = Array.isArray(p.vouchers) ? p.vouchers : [];
+      var idx = list.findIndex(function (x) { return x && String(x.code || '').toUpperCase() === c; });
+      if (idx < 0) return { ok: false, message: 'Voucher không tồn tại trong tài khoản.' };
+      if (list[idx].used) return { ok: true, alreadyUsed: true };
+      list[idx].used = true;
+      p.vouchers = list;
+      this.setCustomerProfile(key, p);
+      if (window.ModevaLogs) {
+        ModevaLogs.append('Voucher đã được sử dụng: ' + c + ' — ' + key, 'info');
+      }
+      return { ok: true };
+    },
+
     createDefaultCustomerProfile: function () {
       return {
         ordersCompleted: 0,

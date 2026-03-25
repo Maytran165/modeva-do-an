@@ -6,9 +6,73 @@ let checkoutData = {
     subtotal: 0,
     discount: 0,
     shipping: 30000,
+    voucherCode: null,
     paymentMethod: 'cod',
     deliveryMethod: 'standard'
 };
+
+function renderCheckoutVouchers () {
+    const host = document.getElementById('checkoutVoucherList');
+    if (!host) return;
+
+    const sess = window.ModevaAuth && ModevaAuth.getSession && ModevaAuth.getSession();
+    if (!sess || sess.role !== 'customer') {
+        host.innerHTML = '<div class="admin-hint">Đăng nhập tài khoản khách để xem voucher.</div>';
+        return;
+    }
+
+    const list = (ModevaAuth.getActiveCustomerVouchers && ModevaAuth.getActiveCustomerVouchers(sess.email)) || [];
+    if (!list.length) {
+        host.innerHTML = '<div class="admin-hint">Bạn không còn voucher khả dụng.</div>';
+        return;
+    }
+
+    host.innerHTML = list.map(function (v) {
+        var code = String(v.code || '');
+        var min = Number(v.minOrder) || 0;
+        var max = Number(v.maxDiscount) || 0;
+        var active = checkoutData.voucherCode && String(checkoutData.voucherCode).toUpperCase() === code.toUpperCase();
+        var disabled = (checkoutData.subtotal || 0) < min;
+        return (
+            '<button type="button" class="voucher-chip' + (active ? ' is-active' : '') + '" ' + (disabled ? 'disabled' : '') +
+            ' data-voucher-code="' + code.replace(/"/g, '&quot;') + '">' +
+            '<strong>' + code + '</strong>' +
+            '<span>Giảm ' + String(v.percent || 0) + '%</span>' +
+            '<small>Max ' + formatCurrency(max) + ' · Đơn từ ' + formatCurrency(min) + '</small>' +
+            '</button>'
+        );
+    }).join('');
+}
+
+function applyCheckoutVoucher (code) {
+    const sess = window.ModevaAuth && ModevaAuth.getSession && ModevaAuth.getSession();
+    if (!sess || sess.role !== 'customer') {
+        showNotification('Vui lòng đăng nhập tài khoản khách để dùng voucher', 'error');
+        return;
+    }
+    if (!window.ModevaAuth || !ModevaAuth.calcVoucherDiscount) {
+        showNotification('Không thể áp dụng voucher. Vui lòng tải lại trang.', 'error');
+        return;
+    }
+
+    const res = ModevaAuth.calcVoucherDiscount(sess.email, code, checkoutData.subtotal);
+    if (!res || !res.ok) {
+        showNotification(res && res.message ? res.message : 'Voucher không hợp lệ', 'error');
+        return;
+    }
+
+    checkoutData.discount = res.discount || 0;
+    checkoutData.voucherCode = String(code || '').trim().toUpperCase();
+
+    const appliedVoucher = document.getElementById('appliedVoucher');
+    const voucherText = document.getElementById('voucherText');
+    if (voucherText) voucherText.textContent = checkoutData.voucherCode;
+    if (appliedVoucher) appliedVoucher.style.display = 'flex';
+
+    updateCheckoutSummary();
+    renderCheckoutVouchers();
+    showNotification('Áp dụng voucher thành công!', 'success');
+}
 
 // Select payment method
 function selectPayment(element, method) {
@@ -124,6 +188,7 @@ function renderCheckoutOrderItems (items) {
 // Remove voucher
 function removeVoucher() {
     checkoutData.discount = 0;
+    checkoutData.voucherCode = null;
     
     const appliedVoucher = document.getElementById('appliedVoucher');
     if (appliedVoucher) {
@@ -131,6 +196,7 @@ function removeVoucher() {
     }
     
     updateCheckoutSummary();
+    renderCheckoutVouchers();
     showNotification('Đã xóa mã giảm giá', 'info');
 }
 
@@ -218,6 +284,7 @@ function placeOrder() {
         items: checkoutData.items || [],
         subtotal: checkoutData.subtotal,
         discount: checkoutData.discount,
+        voucherCode: checkoutData.voucherCode,
         shipping: checkoutData.shipping,
         total: checkoutData.subtotal - checkoutData.discount + checkoutData.shipping,
         createdAt: new Date().toISOString()
@@ -227,6 +294,9 @@ function placeOrder() {
     localStorage.setItem('lastOrder', JSON.stringify(orderData));
 
     ModevaAuth.appendCustomerOrder(sess.email, orderData);
+    if (checkoutData.voucherCode && ModevaAuth.consumeVoucher) {
+        ModevaAuth.consumeVoucher(sess.email, checkoutData.voucherCode);
+    }
     ModevaAuth.recordOrderCompleted(sess.email);
     if (window.ModevaLogs) {
         ModevaLogs.append('Checkout: hoàn tất đặt hàng — ' + orderData.orderId + ' — tổng ' + orderData.total + 'đ', 'info');
@@ -458,6 +528,20 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCheckoutSummary();
         renderCheckoutOrderItems(checkoutData.items || []);
     }
+
+    // Bind voucher clicks (always visible during checkout prep)
+    const voucherHost = document.getElementById('checkoutVoucherList');
+    if (voucherHost && !voucherHost.dataset.bound) {
+        voucherHost.dataset.bound = '1';
+        voucherHost.addEventListener('click', function (e) {
+            const btn = e.target && e.target.closest ? e.target.closest('[data-voucher-code]') : null;
+            if (!btn) return;
+            const code = btn.getAttribute('data-voucher-code');
+            if (!code) return;
+            applyCheckoutVoucher(code);
+        });
+    }
+    renderCheckoutVouchers();
 
     console.log('Checkout page initialized');
 });

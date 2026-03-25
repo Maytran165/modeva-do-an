@@ -553,6 +553,39 @@ ul, ol { list-style: none; }
 .auth-form input#registerOtp,
 .auth-form input#forgotOtp { letter-spacing: 0.15em; font-variant-numeric: tabular-nums; max-width: 12rem; }
 
+/* Checkout voucher list (voucher dùng 1 lần theo tài khoản) */
+.checkout-voucher-block .voucher-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+  margin: 6px 0 10px;
+}
+.checkout-voucher-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.voucher-chip{
+  text-align:left;
+  border:1px solid rgba(15,23,42,.16);
+  background: rgba(255,255,255,.86);
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor:pointer;
+}
+.voucher-chip strong{ display:block; font-weight:900; letter-spacing:.02em; }
+.voucher-chip span{ display:block; font-weight:800; margin-top:2px; }
+.voucher-chip small{ display:block; opacity:.75; margin-top:2px; font-weight:700; }
+.voucher-chip.is-active{
+  border-color: rgba(79,70,229,.35);
+  box-shadow: 0 12px 30px rgba(79,70,229,.10);
+}
+.voucher-chip:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
 /* Profile dashboard */
 .profile-dashboard { padding: var(--gap-3xl) 0; }
 .profile-dashboard__grid { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: var(--gap-xl); align-items: start; }
