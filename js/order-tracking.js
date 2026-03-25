@@ -53,9 +53,8 @@ function renderOrderCardHtml (o) {
         ? '<button type="button" class="btn btn-secondary-modern" onclick="cancelOrder(\'' + escOrder(o.orderId).replace(/'/g, "\\'") + '\')">Hủy đơn</button>'
         : '';
 
-    const printBtn =
-        '<button type="button" class="btn btn-secondary-modern" onclick="printDeliverySlip(\'' +
-        escOrder(o.orderId).replace(/'/g, "\\'") + '\')">In phiếu giao</button>';
+    // Khách hàng không được in phiếu giao (chỉ Admin/Staff).
+    const printBtn = '';
 
     return (
         '<article class="order-card" data-status="' + escOrder(o.status) + '" data-order-id="' + escOrder(o.orderId) + '">' +
@@ -90,117 +89,7 @@ function getOrderFromStorage (orderId) {
     }) || null;
 }
 
-function printDeliverySlip (orderId) {
-    const order = getOrderFromStorage(orderId);
-    if (!order) {
-        showNotification('Không tìm thấy đơn để in', 'warning');
-        return;
-    }
-
-    const sess = window.ModevaAuth && ModevaAuth.getSession();
-    const cust = order.customer || {};
-    const addr = cust.address || {};
-    const items = order.items || [];
-
-    var fromName = 'Modeva';
-    var fromPhone = '1900 1234';
-    var fromAddress = 'Hà Nội, Việt Nam';
-
-    var toName = cust.fullName || sess && sess.name || '';
-    var toPhone = cust.phone || '';
-    var toAddressLine = [addr.address, addr.ward, addr.district, addr.province].filter(Boolean).join(', ');
-
-    var lines = items.map(function (it) {
-        var name = String(it.name || 'Sản phẩm');
-        var variant = it.variant ? (' — ' + String(it.variant)) : '';
-        var qty = parseInt(it.qty, 10) || 1;
-        var unit = parseInt(it.price, 10) || 0;
-        var total = unit * qty;
-        return (
-            '<div class="slip-item">' +
-            '<div class="slip-item__name">' + escOrder(name + variant) + '</div>' +
-            '<div class="slip-item__qty">SL: <strong>' + escOrder(String(qty)) + '</strong></div>' +
-            '<div class="slip-item__unit">Đơn giá: <strong>' + escOrder(formatCurrencyOrder(unit)) + '</strong></div>' +
-            '<div class="slip-item__total">Thành tiền: <strong>' + escOrder(formatCurrencyOrder(total)) + '</strong></div>' +
-            '</div>'
-        );
-    }).join('');
-
-    var w = window.open('', '_blank');
-    if (!w) {
-        showNotification('Trình duyệt chặn cửa sổ mới', 'warning');
-        return;
-    }
-
-    var safeOrderId = escOrder(order.orderId || orderId);
-    var safeCreated = escOrder(formatOrderDate(order.createdAt));
-    var safeToPhone = escOrder(toPhone);
-    var safeToAddress = escOrder(toAddressLine);
-    var safeToName = escOrder(toName);
-
-    w.document.write(
-        '<!doctype html><html><head><meta charset="UTF-8">' +
-        '<title>Phiếu giao ' + safeOrderId + '</title>' +
-        '<style>' +
-        'html,body{margin:0;padding:0;font-family:sans-serif;background:#fff;color:#111;}' +
-        '@page{margin:0;}' +
-        '@media print{body{margin:0;}}' +
-        '.slip{width:90mm;max-width:100vw;padding:12px 10px;box-sizing:border-box;border:1px solid #222;border-radius:2px;}' +
-        '.slip-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}' +
-        '.carrier{font-weight:700;font-size:16px;}' +
-        '.carrier small{font-weight:600;font-size:12px;display:block;margin-top:2px;}' +
-        '.slip-meta{text-align:right;font-size:12px;line-height:1.4;}' +
-        '.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}' +
-        '.panel{border:1px solid #222;border-radius:4px;padding:10px 10px;min-height:110px;}' +
-        '.panel h4{margin:0 0 6px;font-size:13px;}' +
-        '.panel .line{font-size:12px;line-height:1.4;}' +
-        '.items{border:1px dashed #222;margin-top:10px;padding:10px;border-radius:4px;}' +
-        '.items h3{margin:0 0 8px;font-size:13px;}' +
-        '.slip-item{border-bottom:1px dotted #999;padding:8px 0;}' +
-        '.slip-item:last-child{border-bottom:none;}' +
-        '.slip-item__name{font-size:12px;font-weight:700;margin-bottom:2px;}' +
-        '.slip-item__qty,.slip-item__unit,.slip-item__total{font-size:12px;line-height:1.35;}' +
-        '.slip-footer{margin-top:10px;font-size:12px;}' +
-        '</style>' +
-        '</head><body>' +
-        '<div class="slip">' +
-        '<div class="slip-header">' +
-        '<div class="carrier">Shopee <span style="font-weight:600;">&amp;</span> J&amp;T Express' +
-        '<small>Phiếu giao hàng (Demo)</small></div>' +
-        '<div class="slip-meta">' +
-        '<div><strong>Mã đơn:</strong> ' + safeOrderId + '</div>' +
-        '<div><strong>Ngày:</strong> ' + safeCreated + '</div>' +
-        '</div>' +
-        '</div>' +
-        '<div class="grid">' +
-        '<div class="panel">' +
-        '<h4>Từ</h4>' +
-        '<div class="line"><strong>' + escOrder(fromName) + '</strong></div>' +
-        '<div class="line">ĐT: ' + escOrder(fromPhone) + '</div>' +
-        '<div class="line">' + escOrder(fromAddress) + '</div>' +
-        '</div>' +
-        '<div class="panel">' +
-        '<h4>Đến</h4>' +
-        '<div class="line"><strong>' + safeToName + '</strong></div>' +
-        '<div class="line">ĐT: ' + safeToPhone + '</div>' +
-        '<div class="line">' + safeToAddress + '</div>' +
-        '</div>' +
-        '</div>' +
-        '<div class="items">' +
-        '<h3>Sản phẩm</h3>' +
-        lines +
-        '</div>' +
-        '<div class="slip-footer">' +
-        '<div><strong>Tổng:</strong> ' + escOrder(formatCurrencyOrder(order.total || 0)) + '</div>' +
-        '</div>' +
-        '</div>' +
-        '<script>window.onload=function(){setTimeout(function(){try{window.print();}catch(e){}},50);};</script>' +
-        '</body></html>'
-    );
-
-    w.document.close();
-    w.focus();
-}
+// NOTE: printDeliverySlip đã bị gỡ khỏi phía khách (chỉ Admin/Staff được in).
 
 function refreshOrdersFromStorage () {
     const mount = document.getElementById('ordersListMount');

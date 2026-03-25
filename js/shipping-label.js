@@ -4,6 +4,12 @@
 
   var KEY = 'modeva_shipping_label_order';
 
+  function canPrintShippingLabel () {
+    if (!window.ModevaAuth || typeof ModevaAuth.getSession !== 'function') return false;
+    var sess = ModevaAuth.getSession();
+    return !!(sess && (sess.role === 'admin' || sess.role === 'staff'));
+  }
+
   function esc (s) {
     if (s == null) return '';
     return String(s)
@@ -140,6 +146,18 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    // Chặn khách hàng: chỉ Admin/Staff mới được in phiếu giao.
+    if (!canPrintShippingLabel()) {
+      var note = document.getElementById('shipNoDataNote');
+      var root = document.getElementById('shipLabelRoot');
+      if (root) root.innerHTML = '';
+      if (note) {
+        note.style.display = 'block';
+        note.textContent = 'Chỉ Admin/Staff mới được in phiếu giao.';
+      }
+      return;
+    }
+
     var payload = getPayloadFromStorage();
     renderLabel(payload);
     // Tự động in để đúng yêu cầu "chuyển sang trang khác"
