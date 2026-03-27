@@ -4,6 +4,7 @@
 
   var ROLE = document.body.getAttribute('data-dashboard-role') || 'admin';
   var IS_ADMIN = ROLE === 'admin';
+  var invUiChoice = {};
 
   if (!window.ModevaAuth || !ModevaAuth.assertPageRole(ROLE)) return;
 
@@ -18,6 +19,14 @@
     losses: 'modeva_dash_inventory_losses'
   };
 
+  var MYSQL_SYNC_KEYS = {};
+  MYSQL_SYNC_KEYS[K.products] = true;
+  MYSQL_SYNC_KEYS[K.categories] = true;
+  MYSQL_SYNC_KEYS[K.inventory] = true;
+  MYSQL_SYNC_KEYS[K.losses] = true;
+  MYSQL_SYNC_KEYS[K.promos] = true;
+  var mysqlSyncTimer = null;
+
   function read (key, fallback) {
     try {
       var raw = localStorage.getItem(key);
@@ -29,6 +38,63 @@
 
   function write (key, val) {
     localStorage.setItem(key, JSON.stringify(val));
+    if (MYSQL_SYNC_KEYS[key]) schedulePushDashboardSnapshot();
+  }
+
+  function buildDashboardSnapshotPayload () {
+    return {
+      categories: read(K.categories, []),
+      products: read(K.products, []),
+      inventory: read(K.inventory, []),
+      losses: read(K.losses, []),
+      promos: read(K.promos, { coupons: [], flashSales: [], combos: [] })
+    };
+  }
+
+  function schedulePushDashboardSnapshot () {
+    if (!window.ModevaApi || typeof ModevaApi.pushDashboardSnapshot !== 'function') return;
+    if (mysqlSyncTimer) clearTimeout(mysqlSyncTimer);
+    mysqlSyncTimer = setTimeout(function () {
+      mysqlSyncTimer = null;
+      ModevaApi.pushDashboardSnapshot(buildDashboardSnapshotPayload());
+    }, 700);
+  }
+
+  function applySnapshotToLocal (snap) {
+    if (!snap || typeof snap !== 'object') return false;
+    var changed = false;
+    if (Array.isArray(snap.categories)) {
+      localStorage.setItem(K.categories, JSON.stringify(snap.categories));
+      changed = true;
+    }
+    if (Array.isArray(snap.products)) {
+      localStorage.setItem(K.products, JSON.stringify(snap.products));
+      changed = true;
+    }
+    if (Array.isArray(snap.inventory)) {
+      localStorage.setItem(K.inventory, JSON.stringify(snap.inventory));
+      changed = true;
+    }
+    if (Array.isArray(snap.losses)) {
+      localStorage.setItem(K.losses, JSON.stringify(snap.losses));
+      changed = true;
+    }
+    if (snap.promos && typeof snap.promos === 'object') {
+      localStorage.setItem(K.promos, JSON.stringify(snap.promos));
+      changed = true;
+    }
+    return changed;
+  }
+
+  function pullDashboardSnapshotOnce () {
+    if (!window.ModevaApi || typeof ModevaApi.pullDashboardSnapshot !== 'function') {
+      return Promise.resolve({ ok: false, skipped: true });
+    }
+    return ModevaApi.pullDashboardSnapshot().then(function (res) {
+      if (!res || !res.ok || !res.data) return res || { ok: false };
+      applySnapshotToLocal(res.data);
+      return res;
+    });
   }
 
   function esc (s) {
@@ -42,6 +108,17 @@
 
   function money (n) {
     return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+  }
+
+  function uniqueListKeepOrder (arr) {
+    var seen = {};
+    return (arr || []).filter(function (x) {
+      var k = String(x || '').trim().toLowerCase();
+      if (!k) return false;
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
   }
 
   function pushLog (message, level) {
@@ -58,6 +135,68 @@
       user: session ? session.email : '—'
     });
     write(K.logs, logs.slice(0, 200));
+  }
+
+  function asciiKey (s) {
+    return String(s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '')
+      .toUpperCase();
+  }
+
+  function uniqueStrList (arr) {
+    var seen = {};
+    return (arr || []).map(function (x) { return String(x || '').trim(); }).filter(Boolean).filter(function (x) {
+      var k = x.toLowerCase();
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
+  }
+
+  function ensureMinChoices (list, minCount, fallback) {
+    var out = uniqueStrList(list);
+    var f = uniqueStrList(fallback);
+    for (var i = 0; out.length < minCount && i < f.length; i++) {
+      var val = f[i];
+      if (!out.some(function (x) { return x.toLowerCase() === val.toLowerCase(); })) out.push(val);
+    }
+    return out;
+  }
+
+  function buildInventoryFromProducts (products, existingRows) {
+    var rows = Array.isArray(existingRows) ? existingRows : [];
+    var bySku = {};
+    var maxIdNum = 0;
+    rows.forEach(function (r) {
+      if (r && r.sku) bySku[String(r.sku)] = r;
+      var n = r && r.id ? parseInt(String(r.id).replace(/[^\d]/g, ''), 10) : 0;
+      if (!isNaN(n) && n > maxIdNum) maxIdNum = n;
+    });
+    var out = [];
+    var autoId = maxIdNum + 1;
+    (products || []).forEach(function (p) {
+      if (!p || !p.id) return;
+      var sizes = ensureMinChoices(p.sizes, 4, ['S', 'M', 'L', 'XL']).slice(0, 4);
+      var colors = ensureMinChoices(p.colors, 3, ['Trắng', 'Đen', 'Be']);
+      sizes.forEach(function (sz) {
+        colors.forEach(function (col) {
+          var sku = asciiKey(p.id) + '-' + asciiKey(sz).slice(0, 6) + '-' + asciiKey(col).slice(0, 6);
+          var old = bySku[sku];
+          out.push({
+            id: old && old.id ? old.id : ('i' + (autoId++)),
+            productId: p.id,
+            sku: sku,
+            size: sz,
+            color: col,
+            qty: old && old.qty != null ? (parseInt(old.qty, 10) || 0) : 12,
+            min: old && old.min != null ? (parseInt(old.min, 10) || 0) : 4
+          });
+        });
+      });
+    });
+    return out;
   }
 
   function seed () {
@@ -89,14 +228,11 @@
           { id: 'tre-be-gai', name: 'Bé gái', parent: 'tre' }
         ]);
     }
-    if (!read(K.inventory, null)) {
-      write(K.inventory, [
-        { id: 'i1', productId: 'p1', sku: 'P1-S-TR', size: 'S', color: 'Trắng', qty: 24, min: 5 },
-        { id: 'i2', productId: 'p1', sku: 'P1-M-BE', size: 'M', color: 'Be', qty: 3, min: 5 },
-        { id: 'i3', productId: 'p2', sku: 'P2-32-DEN', size: '32', color: 'Đen', qty: 0, min: 4 },
-        { id: 'i4', productId: 'p3', sku: 'P3-S-HONG', size: 'S', color: 'Hồng', qty: 18, min: 6 }
-      ]);
-    }
+    var productsForInv = read(K.products, []);
+    var invNow = read(K.inventory, null);
+    var normalizedInv = buildInventoryFromProducts(productsForInv, invNow || []);
+    // Luôn chuẩn hóa kho theo sản phẩm hiện có để hiển thị đủ 12 sản phẩm, đủ size/màu.
+    write(K.inventory, normalizedInv);
     if (!read(K.orders, null)) {
       write(K.orders, [
         {
@@ -383,32 +519,68 @@
 
   function renderInventory () {
     var inv = read(K.inventory, []);
+    var products = read(K.products, []).filter(function (p) { return !(p.deletedAt || p.isDeleted); });
     var tbody = document.querySelector('#tableInventory tbody');
     if (!tbody) return;
-    if (!inv.length) {
+    if (!inv.length || !products.length) {
       tbody.innerHTML = '<tr><td colspan="7" class="admin-hint">Chưa có dòng tồn kho.</td></tr>';
       fillLossSkuSelect();
       renderLosses();
       return;
     }
-    tbody.innerHTML = inv.map(function (r) {
-      var rowClass = r.qty <= r.min ? 'admin-row-warn' : '';
-      return '<tr' + (rowClass ? ' class="' + rowClass + '"' : '') + '><td>' + esc(productName(r.productId)) + '</td><td>' + esc(r.size) + '</td><td>' +
-        esc(r.color) + '</td><td><input type="number" min="0" class="admin-input-inline" data-inv-qty="' + esc(r.id) + '" value="' + esc(String(r.qty)) + '" aria-label="Tồn"></td><td>' +
-        '<input type="number" min="0" class="admin-input-inline" data-inv-min="' + esc(r.id) + '" value="' + esc(String(r.min)) + '" aria-label="Ngưỡng"></td><td>' +
-        (r.qty === 0 ? '<span class="badge-warn">Hết hàng</span>' : (r.qty <= r.min ? '<span class="badge-warn">Sắp hết</span>' : 'OK')) +
-        '</td><td><button type="button" class="btn btn-secondary-modern btn-sm" data-act="save-inventory" data-id="' + esc(r.id) + '">Lưu</button></td></tr>';
+
+    function uniq (arr) {
+      var seen = {};
+      return (arr || []).filter(function (x) {
+        var k = String(x || '').trim();
+        if (!k) return false;
+        if (seen[k]) return false;
+        seen[k] = true;
+        return true;
+      });
+    }
+
+    tbody.innerHTML = products.map(function (p) {
+      var vars = inv.filter(function (r) { return r.productId === p.id; });
+      if (!vars.length) return '';
+      var sizes = uniq(vars.map(function (r) { return r.size; }));
+      var pick = invUiChoice[p.id] || {};
+      var selSize = sizes.indexOf(pick.size) >= 0 ? pick.size : sizes[0];
+      var colors = uniq(vars.filter(function (r) { return r.size === selSize; }).map(function (r) { return r.color; }));
+      var selColor = colors.indexOf(pick.color) >= 0 ? pick.color : colors[0];
+      var current = vars.find(function (r) { return r.size === selSize && r.color === selColor; }) || vars[0];
+      if (!current) return '';
+      invUiChoice[p.id] = { size: current.size, color: current.color };
+      var rowClass = current.qty <= current.min ? 'admin-row-warn' : '';
+      var sizeOpts = sizes.map(function (s) {
+        return '<option value="' + esc(s) + '"' + (s === current.size ? ' selected' : '') + '>' + esc(s) + '</option>';
+      }).join('');
+      var colorOpts = colors.map(function (c) {
+        return '<option value="' + esc(c) + '"' + (c === current.color ? ' selected' : '') + '>' + esc(c) + '</option>';
+      }).join('');
+      return '<tr' + (rowClass ? ' class="' + rowClass + '"' : '') + '><td>' + esc(productName(p.id)) + '</td><td>' +
+        '<select class="admin-input-inline admin-inv-size" data-product="' + esc(p.id) + '">' + sizeOpts + '</select></td><td>' +
+        '<select class="admin-input-inline admin-inv-color" data-product="' + esc(p.id) + '">' + colorOpts + '</select></td><td>' +
+        '<input type="number" min="0" class="admin-input-inline" data-inv-qty-product="' + esc(p.id) + '" value="' + esc(String(current.qty)) + '" aria-label="Tồn"></td><td>' +
+        '<input type="number" min="0" class="admin-input-inline" data-inv-min-product="' + esc(p.id) + '" value="' + esc(String(current.min)) + '" aria-label="Ngưỡng"></td><td>' +
+        (current.qty === 0 ? '<span class="badge-warn">Hết hàng</span>' : (current.qty <= current.min ? '<span class="badge-warn">Sắp hết</span>' : 'OK')) +
+        '</td><td><button type="button" class="btn btn-secondary-modern btn-sm" data-act="save-inventory" data-id="' + esc(p.id) + '">Lưu</button></td></tr>';
     }).join('');
     fillLossSkuSelect();
     renderLosses();
   }
 
-  function saveInventoryRow (invId) {
+  function saveInventoryRow (productId) {
     var inv = read(K.inventory, []);
-    var idx = inv.findIndex(function (x) { return x.id === invId; });
+    var sizeEl = document.querySelector('.admin-inv-size[data-product="' + String(productId).replace(/"/g, '') + '"]');
+    var colorEl = document.querySelector('.admin-inv-color[data-product="' + String(productId).replace(/"/g, '') + '"]');
+    if (!sizeEl || !colorEl) return;
+    var size = sizeEl.value;
+    var color = colorEl.value;
+    var idx = inv.findIndex(function (x) { return x.productId === productId && x.size === size && x.color === color; });
     if (idx < 0) return;
-    var qEl = document.querySelector('[data-inv-qty="' + invId.replace(/"/g, '') + '"]');
-    var mEl = document.querySelector('[data-inv-min="' + invId.replace(/"/g, '') + '"]');
+    var qEl = document.querySelector('[data-inv-qty-product="' + String(productId).replace(/"/g, '') + '"]');
+    var mEl = document.querySelector('[data-inv-min-product="' + String(productId).replace(/"/g, '') + '"]');
     var q = qEl ? parseInt(qEl.value, 10) : inv[idx].qty;
     var m = mEl ? parseInt(mEl.value, 10) : inv[idx].min;
     if (isNaN(q) || q < 0) q = 0;
@@ -416,7 +588,7 @@
     inv[idx].qty = q;
     inv[idx].min = m;
     write(K.inventory, inv);
-    pushLog('Cập nhật tồn kho ' + invId + ' → tồn ' + q + ', ngưỡng ' + m, 'info');
+    pushLog('Cập nhật tồn kho ' + productId + ' [' + size + '/' + color + '] → tồn ' + q + ', ngưỡng ' + m, 'info');
     renderInventory();
     renderLosses();
     renderOverview();
@@ -487,18 +659,106 @@
       completed: 'Hoàn tất',
       cancelled: 'Đã hủy'
     };
-    tbody.innerHTML = orders.map(function (o) {
+    ensureOrderFilterControl(statusVi);
+    var filterStatus = getOrderFilterValue();
+    var filtered = filterStatus === 'all'
+      ? orders
+      : orders.filter(function (o) { return o.status === filterStatus; });
+    tbody.innerHTML = filtered.map(function (o) {
       var opts = statuses.map(function (s) {
         return '<option value="' + esc(s) + '"' + (o.status === s ? ' selected' : '') + '>' + esc(statusVi[s] || s) + '</option>';
       }).join('');
+      var confirmBtn = o.status === 'pending'
+        ? ' <button type="button" class="btn btn-secondary-modern btn-sm" data-act="order-confirm" data-id="' + esc(o.id) + '">Đã xác nhận</button>'
+        : '';
       return '<tr data-order-id="' + esc(o.id) + '"><td>' + esc(o.id) + '</td><td>' + esc(o.customer) + '</td><td>' + esc(o.email) + '</td><td>' +
         esc(money(o.total)) + '</td><td><select class="admin-order-status" data-id="' + esc(o.id) + '">' + opts + '</select></td><td>' + esc(o.date) + '</td>' +
         '<td><button type="button" class="btn btn-secondary-modern btn-sm" data-act="order-detail" data-id="' + esc(o.id) + '">Chi tiết</button> ' +
-        '<button type="button" class="btn btn-secondary-modern btn-sm" data-act="print-invoice" data-id="' + esc(o.id) + '">In phiếu giao</button></td></tr>';
+        '<button type="button" class="btn btn-secondary-modern btn-sm" data-act="print-invoice" data-id="' + esc(o.id) + '">In phiếu giao</button>' +
+        confirmBtn + '</td></tr>';
     }).join('');
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="admin-hint">Không có đơn theo bộ lọc đã chọn.</td></tr>';
+    }
+  }
+
+  function getOrderFilterValue () {
+    var sel = document.getElementById('ordersStatusFilter');
+    if (!sel) return 'all';
+    return String(sel.value || 'all');
+  }
+
+  function ensureOrderFilterControl (statusVi) {
+    var table = document.getElementById('tableOrders');
+    if (!table) return;
+    var wrap = table.parentElement;
+    if (!wrap) return;
+    var existing = document.getElementById('ordersFilterBar');
+    if (existing) return;
+
+    var bar = document.createElement('div');
+    bar.id = 'ordersFilterBar';
+    bar.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;';
+    var sel = document.createElement('select');
+    sel.id = 'ordersStatusFilter';
+    sel.className = 'admin-input-inline';
+    sel.style.minWidth = '220px';
+    sel.innerHTML =
+      '<option value="all">Tất cả trạng thái</option>' +
+      '<option value="pending">' + esc(statusVi.pending) + '</option>' +
+      '<option value="processing">' + esc(statusVi.processing) + '</option>' +
+      '<option value="shipping">' + esc(statusVi.shipping) + '</option>' +
+      '<option value="completed">' + esc(statusVi.completed) + '</option>' +
+      '<option value="cancelled">' + esc(statusVi.cancelled) + '</option>';
+    sel.addEventListener('change', function () {
+      renderOrders();
+    });
+    bar.appendChild(sel);
+    wrap.parentNode.insertBefore(bar, wrap);
+  }
+
+  function syncCustomersFromOrders () {
+    var customers = read(K.customers, []);
+    var orders = read(K.orders, []);
+    var byEmail = {};
+
+    customers.forEach(function (c) {
+      var em = String(c.email || '').trim().toLowerCase();
+      if (!em) return;
+      // Reset thống kê mỗi lần đồng bộ để tránh cộng dồn sai.
+      byEmail[em] = Object.assign({}, c, {
+        orders: 0,
+        spent: 0
+      });
+    });
+
+    orders.forEach(function (o) {
+      var em = String(o.email || '').trim().toLowerCase();
+      if (!em) return;
+      if (!byEmail[em]) {
+        byEmail[em] = {
+          id: 'c' + Date.now() + Math.floor(Math.random() * 1000),
+          name: o.customer || em,
+          email: em,
+          tier: 'regular',
+          orders: 0,
+          spent: 0
+        };
+      }
+      // Chỉ cập nhật số đơn + tổng chi khi đơn hoàn tất.
+      if (o.status === 'completed') {
+        byEmail[em].orders = (Number(byEmail[em].orders) || 0) + 1;
+        byEmail[em].spent = (Number(byEmail[em].spent) || 0) + (Number(o.total) || 0);
+      }
+    });
+
+    var merged = Object.keys(byEmail).map(function (k) { return byEmail[k]; });
+    merged.sort(function (a, b) { return (Number(b.spent) || 0) - (Number(a.spent) || 0); });
+    write(K.customers, merged);
   }
 
   function renderCustomers () {
+    syncCustomersFromOrders();
     var customers = read(K.customers, []);
     var tbody = document.querySelector('#tableCustomers tbody');
     if (!tbody) return;
@@ -564,6 +824,90 @@
       activeProducts.filter(function (p) { return p.salePrice; }).map(function (p) { return esc(p.name); }).join(', ') + '</p>';
   }
 
+  function renderCharts () {
+    var el = document.getElementById('dashCharts');
+    if (!el) return;
+    var orders = read(K.orders, []);
+    var losses = read(K.losses, []);
+    var revenue = orders.filter(function (o) { return o.status === 'completed'; })
+      .reduce(function (s, o) { return s + (Number(o.total) || 0); }, 0);
+    var lossVal = losses.reduce(function (s, x) { return s + (Number(x.valueEstimated) || 0); }, 0);
+    var total = revenue + lossVal;
+    var revPct = total > 0 ? Math.round((revenue / total) * 100) : 0;
+    var lossPct = total > 0 ? (100 - revPct) : 0;
+    var chartBg = total > 0
+      ? ('conic-gradient(#10b981 0 ' + revPct + '%, #ef4444 ' + revPct + '% 100%)')
+      : 'conic-gradient(#d1d5db 0 100%)';
+    var centerText = total > 0 ? (revPct + '%') : '0%';
+    var statusMeta = [
+      { key: 'pending', label: 'Chờ xác nhận' },
+      { key: 'processing', label: 'Đang xử lý' },
+      { key: 'shipping', label: 'Đang giao' },
+      { key: 'completed', label: 'Hoàn tất' },
+      { key: 'cancelled', label: 'Đã hủy' }
+    ];
+    var statusCounts = statusMeta.map(function (s) {
+      return orders.filter(function (o) { return o.status === s.key; }).length;
+    });
+    var maxY = statusCounts.reduce(function (mx, n) { return Math.max(mx, n); }, 0);
+    if (maxY < 1) maxY = 1;
+    var svgW = 540;
+    var svgH = 220;
+    var padL = 36;
+    var padR = 20;
+    var padT = 20;
+    var padB = 44;
+    var usableW = svgW - padL - padR;
+    var usableH = svgH - padT - padB;
+    var points = statusCounts.map(function (v, i) {
+      var x = padL + (i * (usableW / Math.max(1, statusCounts.length - 1)));
+      var y = padT + ((maxY - v) / maxY) * usableH;
+      return { x: x, y: y, v: v };
+    });
+    var polyline = points.map(function (p) { return p.x.toFixed(2) + ',' + p.y.toFixed(2); }).join(' ');
+    var xLabels = statusMeta.map(function (s, i) {
+      var x = padL + (i * (usableW / Math.max(1, statusMeta.length - 1)));
+      return '<text x="' + x.toFixed(2) + '" y="' + (svgH - 16) + '" text-anchor="middle" font-size="11" fill="#6b7280">' + esc(s.label) + '</text>';
+    }).join('');
+    var dots = points.map(function (p) {
+      return '<circle cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="4" fill="#2563eb"></circle>' +
+        '<text x="' + p.x.toFixed(2) + '" y="' + (p.y - 10).toFixed(2) + '" text-anchor="middle" font-size="11" fill="#111827">' + esc(String(p.v)) + '</text>';
+    }).join('');
+    var axis =
+      '<line x1="' + padL + '" y1="' + (padT + usableH) + '" x2="' + (padL + usableW) + '" y2="' + (padT + usableH) + '" stroke="#d1d5db"></line>' +
+      '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (padT + usableH) + '" stroke="#d1d5db"></line>';
+    var lineChartHtml =
+      '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" width="100%" height="260" role="img" aria-label="Biểu đồ đường số đơn theo trạng thái">' +
+        axis +
+        '<polyline points="' + polyline + '" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>' +
+        dots +
+        xLabels +
+      '</svg>';
+
+    el.innerHTML =
+      '<div class="admin-form-card" style="margin-top:14px">' +
+        '<h3 style="margin-top:0">Biểu đồ tròn doanh thu và tổn thất hàng hỏng</h3>' +
+        '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">' +
+          '<div style="position:relative;width:220px;height:220px;border-radius:50%;background:' + chartBg + '">' +
+            '<div style="position:absolute;inset:22px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px">' +
+              esc(centerText) +
+            '</div>' +
+          '</div>' +
+          '<div style="display:grid;gap:10px;min-width:260px">' +
+            '<div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:8px"></span>' +
+              'Doanh thu: <strong>' + esc(money(revenue)) + '</strong> (' + esc(String(revPct)) + '%)</div>' +
+            '<div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:8px"></span>' +
+              'Tổn thất hàng hỏng: <strong>' + esc(money(lossVal)) + '</strong> (' + esc(String(lossPct)) + '%)</div>' +
+            '<p class="admin-hint" style="margin:4px 0 0">Tỷ lệ tính trên tổng doanh thu + tổng tổn thất ước tính.</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="admin-form-card" style="margin-top:14px">' +
+        '<h3 style="margin-top:0">Biểu đồ đường số đơn theo trạng thái</h3>' +
+        lineChartHtml +
+      '</div>';
+  }
+
   function renderSystem () {
     var logs = read(K.logs, []).slice(0, 50);
     var logEl = document.getElementById('systemLogs');
@@ -624,9 +968,13 @@
     }).join('');
     var addrBlock = '<p class="admin-hint"><strong>Địa chỉ giao:</strong> ' + esc(formatOrderAddress(o)) + '</p>';
     var phoneLine = o.phone ? '<p>Điện thoại: ' + esc(o.phone) + '</p>' : '';
+    var cancelLine = o.cancelReason
+      ? '<p class="admin-hint"><strong>Lý do hủy:</strong> ' + esc(o.cancelReason) + (o.cancelledAt ? (' · ' + esc(o.cancelledAt)) : '') + '</p>'
+      : '';
     body.innerHTML = '<h3>Đơn ' + esc(o.id) + '</h3>' +
       '<p>Khách: <strong>' + esc(o.customer) + '</strong> · ' + esc(o.email) + '</p>' + phoneLine + addrBlock +
       '<p>Tổng: ' + esc(money(o.total)) + ' · Trạng thái: ' + esc(o.status) + ' · Ngày: ' + esc(o.date || '') + '</p>' +
+      cancelLine +
       (o.note ? '<p>Ghi chú đơn: ' + esc(o.note) + '</p>' : '') +
       '<table class="admin-table admin-table--compact" style="margin-top:12px"><thead><tr><th>#</th><th>Sản phẩm</th><th>Phân loại</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>' +
       (rows || '<tr><td colspan="6">—</td></tr>') + '</tbody></table>';
@@ -742,7 +1090,7 @@
       name: name.value.trim(),
       cat: cat.value,
       sizes: (sizes.value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
-      colors: (colors.value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+      colors: uniqueListKeepOrder((colors.value || '').split(',').map(function (s) { return s.trim(); })),
       price: parseInt(price.value, 10) || 0,
       salePrice: sale && sale.value ? parseInt(sale.value, 10) : null,
       images: img && img.value ? parseInt(img.value, 10) || 1 : 1,
@@ -881,7 +1229,7 @@
     p.name = name.value.trim();
     p.cat = cat.value;
     p.sizes = (sizes && sizes.value ? sizes.value : '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-    p.colors = (colors && colors.value ? colors.value : '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    p.colors = uniqueListKeepOrder((colors && colors.value ? colors.value : '').split(',').map(function (s) { return s.trim(); }));
     p.price = parseInt(price.value, 10) || 0;
     p.salePrice = sale && sale.value !== '' ? parseInt(sale.value, 10) : null;
     p.imageUrl = imgUrl && imgUrl.value.trim() ? imgUrl.value.trim() : '';
@@ -966,6 +1314,7 @@
     if (target === 'customers') renderCustomers();
     if (target === 'promos') renderPromos();
     if (target === 'reports') renderReports();
+    if (target === 'charts') renderCharts();
     if (target === 'staff-roles') renderStaffRoles();
     if (target === 'system') renderSystem();
   }
@@ -1051,6 +1400,13 @@
       }
       if (act === 'order-detail') showOrderDetail(id);
       if (act === 'print-invoice') printInvoice(id);
+      if (act === 'order-confirm') {
+        var s = document.querySelector('.admin-order-status[data-id="' + id.replace(/"/g, '') + '"]');
+        if (s) {
+          s.value = 'shipping';
+          s.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
       if (act === 'cust-history') showCustomerHistory(t.getAttribute('data-email'));
       if (act === 'save-inventory') saveInventoryRow(t.getAttribute('data-id'));
     });
@@ -1061,17 +1417,41 @@
         var orders = read(K.orders, []);
         var o = orders.find(function (x) { return x.id === oid; });
         if (o) {
+          var prevStatus = o.status;
           o.status = e.target.value;
+          if (!o.adminConfirmedAt && prevStatus === 'pending' && o.status !== 'pending' && o.status !== 'cancelled') {
+            o.adminConfirmedAt = new Date().toISOString();
+          }
           write(K.orders, orders);
           if (window.ModevaAuth && o.email && typeof ModevaAuth.setCustomerOrderStatus === 'function') {
             var custSt = typeof ModevaAuth.mapAdminStatusToCustomer === 'function'
               ? ModevaAuth.mapAdminStatusToCustomer(o.status)
               : o.status;
-            ModevaAuth.setCustomerOrderStatus(o.email, oid, custSt);
+            ModevaAuth.setCustomerOrderStatus(o.email, oid, custSt, {
+              adminConfirmedAt: o.adminConfirmedAt || null
+            });
+            if (o.adminConfirmedAt && typeof ModevaAuth.setCustomerOrderAdminConfirmed === 'function') {
+              ModevaAuth.setCustomerOrderAdminConfirmed(o.email, oid, o.adminConfirmedAt);
+            }
           }
           pushLog('Cập nhật trạng thái đơn ' + oid + ' → ' + o.status, 'info');
+          syncCustomersFromOrders();
           renderOverview();
+          renderCustomers();
           renderReports();
+          renderCharts();
+        }
+      }
+      if (e.target.classList.contains('admin-inv-size') || e.target.classList.contains('admin-inv-color')) {
+        var pid = e.target.getAttribute('data-product');
+        if (pid) {
+          var szEl = document.querySelector('.admin-inv-size[data-product="' + pid.replace(/"/g, '') + '"]');
+          var clEl = document.querySelector('.admin-inv-color[data-product="' + pid.replace(/"/g, '') + '"]');
+          invUiChoice[pid] = {
+            size: szEl ? szEl.value : '',
+            color: clEl ? clEl.value : ''
+          };
+          renderInventory();
         }
       }
       if (e.target.classList.contains('admin-tier') && IS_ADMIN) {
@@ -1121,15 +1501,36 @@
         renderOverview();
       }
     });
+
+    window.addEventListener('storage', function (e) {
+      if (!e || !e.key) return;
+      if (e.key !== K.orders && e.key !== 'modeva_customer_orders') return;
+      if (window.ModevaAuth && typeof ModevaAuth.reconcileAdminOrdersFromCustomerStore === 'function') {
+        ModevaAuth.reconcileAdminOrdersFromCustomerStore();
+      }
+      syncCustomersFromOrders();
+      renderOrders();
+      renderOverview();
+      renderCustomers();
+      renderReports();
+      renderCharts();
+    });
   }
 
-  seed();
-  if (window.ModevaCatalogSync && typeof ModevaCatalogSync.mergeCatalogDefaults === 'function') {
-    ModevaCatalogSync.mergeCatalogDefaults();
+  function startDashboard () {
+    seed();
+    if (window.ModevaCatalogSync && typeof ModevaCatalogSync.mergeCatalogDefaults === 'function') {
+      ModevaCatalogSync.mergeCatalogDefaults();
+    }
+    if (window.ModevaAuth && typeof ModevaAuth.reconcileAdminOrdersFromCustomerStore === 'function') {
+      ModevaAuth.reconcileAdminOrdersFromCustomerStore();
+    }
+    syncCustomersFromOrders();
+    bind();
+    navigate('overview');
   }
-  bind();
-  if (window.ModevaAuth && typeof ModevaAuth.reconcileAdminOrdersFromCustomerStore === 'function') {
-    ModevaAuth.reconcileAdminOrdersFromCustomerStore();
-  }
-  navigate('overview');
+
+  pullDashboardSnapshotOnce().finally(function () {
+    startDashboard();
+  });
 })();

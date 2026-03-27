@@ -1,0 +1,14 @@
+{
+  "name": "modeva-mysql-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static site + REST API đồng bộ MySQL cho Modeva",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5"
+  }
+}

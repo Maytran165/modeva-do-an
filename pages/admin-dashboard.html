@@ -43,6 +43,7 @@
                     <button type="button" class="admin-nav__item" data-dash-target="customers"><i class="fas fa-users"></i> Khách hàng</button>
                     <button type="button" class="admin-nav__item" data-dash-target="promos"><i class="fas fa-tags"></i> Khuyến mãi</button>
                     <button type="button" class="admin-nav__item" data-dash-target="reports"><i class="fas fa-chart-line"></i> Báo cáo</button>
+                    <button type="button" class="admin-nav__item admin-only" data-dash-target="charts"><i class="fas fa-chart-column"></i> Biểu đồ</button>
                     <button type="button" class="admin-nav__item admin-only" data-dash-target="staff-roles"><i class="fas fa-user-cog"></i> Phân bổ Staff</button>
                     <button type="button" class="admin-nav__item" data-dash-target="system"><i class="fas fa-shield-halved"></i> Hệ thống</button>
                 </nav>
@@ -246,6 +247,16 @@
                     <div id="dashReports"></div>
                 </section>
 
+                <section id="panel-charts" class="admin-panel admin-only">
+                    <div class="section-heading modern-heading">
+                        <div>
+                            <span class="eyebrow">Trực quan dữ liệu</span>
+                            <h2>Biểu đồ</h2>
+                        </div>
+                    </div>
+                    <div id="dashCharts"></div>
+                </section>
+
                 <section id="panel-staff-roles" class="admin-panel admin-only">
                     <div class="section-heading modern-heading">
                         <div>
@@ -305,6 +316,7 @@
     </div>
 
     <script src="../js/modeva-logs.js"></script>
+    <script src="../js/modeva-api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/catalog-sync.js"></script>
     <script src="../js/main.js"></script>

@@ -8,10 +8,17 @@
   var ORDERS_KEY = 'modeva_customer_orders';
   /** Đồng bộ với bảng đơn Admin (js/admin-app.js, cùng key). */
   var ADMIN_ORDERS_KEY = 'modeva_dash_orders';
+  var CUSTOMER_RESET_ONCE_KEY = 'modeva_customer_reset_once_done';
+  /** Lịch sử reset khách (xóa mềm): mỗi lần admin reset append 1 bản ghi, dữ liệu gốc không mất hẳng. */
+  var SOFT_RESET_ARCHIVE_KEY = 'modeva_admin_customer_soft_archive';
+  var CUSTOMER_RELOAD_GUARD_KEY = 'modeva_customer_reload_guard';
   var LOCKOUT_KEY = 'modeva_login_lockout';
+  var CUSTOMER_RELOAD_MAX = 10;
 
   /** Thời gian phiên (ms) — hết hạn phải đăng nhập lại */
   var SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+  /** Phiên ghi nhớ đăng nhập (mặc định) */
+  var REMEMBER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
   var LOGIN_MAX_FAILS = 5;
   var LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
   var PBKDF2_ITERATIONS = 120000;
@@ -157,27 +164,115 @@
     saveLockoutMap(m);
   }
 
-  /** Giỏ demo / giỏ khách: xoá khi bắt đầu phiên khách (đăng nhập / đăng ký). */
+  /** Giỏ lưu localStorage — xoá khi bắt đầu phiên khách mới (đăng nhập / đăng ký). */
   function clearSessionShoppingCart () {
     try {
-      sessionStorage.removeItem('cartData');
-      sessionStorage.setItem('modeva_cart', '0');
+      localStorage.removeItem('cartData');
+      localStorage.setItem('modeva_cart', '0');
+      try {
+        sessionStorage.removeItem('cartData');
+        sessionStorage.removeItem('modeva_cart');
+      } catch (e2) {}
       if (typeof window.updateBadges === 'function') {
         window.updateBadges(0);
       }
     } catch (e) {}
   }
 
+  function appendSoftResetArchive (entry) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(SOFT_RESET_ARCHIVE_KEY) || '[]');
+      if (!Array.isArray(arr)) arr = [];
+      arr.push(entry);
+      if (arr.length > 40) arr = arr.slice(-40);
+      localStorage.setItem(SOFT_RESET_ARCHIVE_KEY, JSON.stringify(arr));
+    } catch (e) {}
+  }
+
+  function getReloadGuardMap () {
+    try {
+      return JSON.parse(localStorage.getItem(CUSTOMER_RELOAD_GUARD_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveReloadGuardMap (obj) {
+    localStorage.setItem(CUSTOMER_RELOAD_GUARD_KEY, JSON.stringify(obj || {}));
+  }
+
+  function resetCustomerReloadCount (email) {
+    var id = normalizeId(email);
+    if (!id) return;
+    var map = getReloadGuardMap();
+    map[id] = 0;
+    saveReloadGuardMap(map);
+  }
+
+  function clearCustomerReloadCount (email) {
+    var id = normalizeId(email);
+    if (!id) return;
+    var map = getReloadGuardMap();
+    delete map[id];
+    saveReloadGuardMap(map);
+  }
+
+  function enforceCustomerReloadLimit () {
+    var raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    var sess = null;
+    try { sess = JSON.parse(raw); } catch (e) { return; }
+    if (!sess || sess.role !== 'customer' || !sess.email) return;
+    var email = normalizeId(sess.email);
+    var map = getReloadGuardMap();
+    var count = parseInt(map[email], 10) || 0;
+    count += 1;
+    map[email] = count;
+    saveReloadGuardMap(map);
+
+    if (count === CUSTOMER_RELOAD_MAX) {
+      setTimeout(function () {
+        if (typeof window.showNotification === 'function') {
+          window.showNotification('Bạn đã tải lại trang đủ 10 lần. Lần tiếp theo hệ thống sẽ tự đăng xuất.', 'warning');
+        } else {
+          alert('Bạn đã tải lại trang đủ 10 lần. Lần tiếp theo hệ thống sẽ tự đăng xuất.');
+        }
+      }, 0);
+      if (window.ModevaLogs) {
+        ModevaLogs.append('Cảnh báo reload lần 10: ' + email, 'warning');
+      }
+      return;
+    }
+
+    if (count > CUSTOMER_RELOAD_MAX) {
+      localStorage.removeItem(SESSION_KEY);
+      clearCustomerReloadCount(email);
+      if (window.ModevaLogs) {
+        ModevaLogs.append('Tự đăng xuất do vượt quá giới hạn reload: ' + email, 'warning');
+      }
+      setTimeout(function () {
+        if (typeof window.showNotification === 'function') {
+          window.showNotification('Bạn đã vượt quá 10 lần tải lại trang. Hệ thống đã tự đăng xuất.', 'error');
+        } else {
+          alert('Bạn đã vượt quá 10 lần tải lại trang. Hệ thống đã tự đăng xuất.');
+        }
+        window.location.href = 'account.html';
+      }, 0);
+    }
+  }
+
   function completeLoginSession (self, user, id) {
     if (user.role === 'customer') {
       clearSessionShoppingCart();
       self.ensureCustomerProfile(id);
+      resetCustomerReloadCount(id);
     }
     self.setSession({
       email: id,
       name: user.name,
       role: user.role,
       staffPosition: user.staffPosition || '',
+      remember: true,
       at: Date.now()
     });
     if (window.ModevaLogs) {
@@ -264,12 +359,42 @@
     return s;
   }
 
-  function syncAdminOrderStatusFromCustomer (orderId, customerStatus) {
+  function syncAdminOrderStatusFromCustomer (orderId, customerStatus, meta) {
     var list = readAdminOrdersList();
     var idx = list.findIndex(function (x) { return x.id === orderId; });
     if (idx < 0) return;
     list[idx].status = mapCustomerStatusToAdmin(customerStatus);
+    if (meta && typeof meta === 'object') {
+      if (meta.cancelReason != null) list[idx].cancelReason = meta.cancelReason;
+      if (meta.cancelledAt != null) list[idx].cancelledAt = meta.cancelledAt;
+      if (meta.adminConfirmedAt != null) list[idx].adminConfirmedAt = meta.adminConfirmedAt;
+    }
     writeAdminOrdersList(list);
+  }
+
+  function findCustomerOrderIndex (store, emailKey, orderId) {
+    var list = store[emailKey];
+    if (!Array.isArray(list)) return -1;
+    return list.findIndex(function (x) { return x && x.orderId === orderId; });
+  }
+
+  function findCustomerOrderByIdAnyOwner (store, orderId) {
+    var owners = Object.keys(store || {});
+    for (var i = 0; i < owners.length; i++) {
+      var emailKey = owners[i];
+      var idx = findCustomerOrderIndex(store, emailKey, orderId);
+      if (idx >= 0) {
+        return { emailKey: emailKey, idx: idx };
+      }
+    }
+    return null;
+  }
+
+  function isWithinFirst24Hours (createdAtIso) {
+    if (!createdAtIso) return false;
+    var created = new Date(createdAtIso).getTime();
+    if (!created || isNaN(created)) return false;
+    return (Date.now() - created) <= 24 * 60 * 60 * 1000;
   }
 
   function buildAdminOrderRecord (raw) {
@@ -309,7 +434,10 @@
       address: addr,
       paymentMethod: raw.paymentMethod,
       deliveryMethod: raw.deliveryMethod,
-      note: raw.note || ''
+      note: raw.note || '',
+      cancelReason: raw.cancelReason || '',
+      cancelledAt: raw.cancelledAt || null,
+      adminConfirmedAt: raw.adminConfirmedAt || null
     };
   }
 
@@ -323,7 +451,7 @@
       var prev = list[idx];
       list[idx] = Object.assign({}, prev, rec, { status: prev.status });
     } else {
-      rec.status = 'processing';
+      rec.status = 'pending';
       list.unshift(rec);
     }
     writeAdminOrdersList(list);
@@ -513,12 +641,15 @@
       });
       store[key].unshift({
         orderId: raw.orderId,
-        status: 'processing',
+        status: 'pending',
         createdAt: raw.createdAt || new Date().toISOString(),
         total: raw.total,
         subtotal: raw.subtotal,
         discount: raw.discount,
         shipping: raw.shipping,
+        paymentStatus: raw.paymentStatus || 'pending',
+        paidAt: raw.paidAt || null,
+        adminConfirmedAt: raw.adminConfirmedAt || null,
         items: items,
         customer: raw.customer || {},
         paymentMethod: raw.paymentMethod,
@@ -574,22 +705,145 @@
       return mapAdminStatusToCustomer(status);
     },
 
-    setCustomerOrderStatus: function (email, orderId, status) {
+    markCustomerOrderPaidOnce: function (email, orderId, extra) {
       var key = normalizeId(email);
       var store = this.getOrdersStore();
-      var list = store[key];
-      if (!Array.isArray(list)) return;
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].orderId === orderId) {
-          list[i].status = status;
-          if (window.ModevaLogs) {
-            ModevaLogs.append('Cập nhật trạng thái đơn khách: ' + orderId + ' → ' + status + ' (' + key + ')', 'info');
-          }
-          break;
+      var idx = findCustomerOrderIndex(store, key, orderId);
+      if (idx < 0) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+      var order = store[key][idx];
+      if (order.paymentStatus === 'paid' || order.paidAt) {
+        return { ok: false, code: 'ALREADY_PAID', message: 'Đơn hàng này đã được thanh toán trước đó.' };
+      }
+      if (order.status === 'cancelled' || order.status === 'delivered' || order.status === 'completed') {
+        return { ok: false, code: 'ORDER_LOCKED', message: 'Không thể thanh toán cho đơn ở trạng thái hiện tại.' };
+      }
+      order.paymentStatus = 'paid';
+      order.paidAt = new Date().toISOString();
+      // Chỉ khi thanh toán thành công mới chuyển sang "đang xử lý".
+      order.status = 'processing';
+      if (extra && typeof extra === 'object') {
+        if (extra.method) order.paymentMethod = extra.method;
+        if (extra.note != null) order.note = extra.note;
+        if (extra.customer && typeof extra.customer === 'object') {
+          order.customer = Object.assign({}, order.customer || {}, extra.customer);
         }
       }
       this.saveOrdersStore(store);
-      syncAdminOrderStatusFromCustomer(orderId, status);
+      upsertAdminDashboardOrder(order);
+      syncAdminOrderStatusFromCustomer(orderId, 'processing');
+      return { ok: true, order: order };
+    },
+
+    canCustomerEditOrder: function (email, orderId) {
+      var key = normalizeId(email);
+      var store = this.getOrdersStore();
+      var idx = findCustomerOrderIndex(store, key, orderId);
+      if (idx < 0) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+      var order = store[key][idx];
+      if (order.adminConfirmedAt) {
+        return { ok: false, code: 'ADMIN_CONFIRMED', message: 'Đơn đã được Admin/Staff xác nhận, không thể chỉnh sửa.' };
+      }
+      if (!isWithinFirst24Hours(order.createdAt)) {
+        return { ok: false, code: 'EXPIRED_24H', message: 'Chỉ được chỉnh sửa trong 24 giờ đầu kể từ lúc tạo đơn.' };
+      }
+      if (order.status === 'cancelled' || order.status === 'delivered' || order.status === 'completed') {
+        return { ok: false, code: 'ORDER_LOCKED', message: 'Trạng thái đơn hiện tại không cho phép chỉnh sửa.' };
+      }
+      return { ok: true, order: order };
+    },
+
+    updateCustomerOrderInFirst24h: function (email, orderId, patch) {
+      var check = this.canCustomerEditOrder(email, orderId);
+      if (!check.ok) return check;
+      var key = normalizeId(email);
+      var store = this.getOrdersStore();
+      var idx = findCustomerOrderIndex(store, key, orderId);
+      if (idx < 0) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+      var order = store[key][idx];
+      var data = patch || {};
+
+      if (data.paymentMethod) {
+        order.paymentMethod = String(data.paymentMethod);
+      }
+      if (data.customer && typeof data.customer === 'object') {
+        var old = order.customer || {};
+        var addr = Object.assign({}, old.address || {}, (data.customer.address || {}));
+        order.customer = Object.assign({}, old, data.customer, { address: addr });
+      }
+      if (typeof data.note === 'string') {
+        order.note = data.note;
+      }
+      order.updatedAt = new Date().toISOString();
+
+      this.saveOrdersStore(store);
+      upsertAdminDashboardOrder(order);
+      return { ok: true, order: order };
+    },
+
+    setCustomerOrderAdminConfirmed: function (email, orderId, confirmedAt) {
+      var key = normalizeId(email);
+      var store = this.getOrdersStore();
+      var idx = findCustomerOrderIndex(store, key, orderId);
+      var ownerKey = key;
+      if (idx < 0) {
+        var hit = findCustomerOrderByIdAnyOwner(store, orderId);
+        if (!hit) return { ok: false, message: 'Không tìm thấy đơn hàng.' };
+        ownerKey = hit.emailKey;
+        idx = hit.idx;
+      }
+      var order = store[ownerKey][idx];
+      order.adminConfirmedAt = confirmedAt || new Date().toISOString();
+      this.saveOrdersStore(store);
+      upsertAdminDashboardOrder(order);
+      return { ok: true, order: order };
+    },
+
+    setCustomerOrderStatus: function (email, orderId, status, meta) {
+      var key = normalizeId(email);
+      var store = this.getOrdersStore();
+      var list = store[key];
+      var ownerKey = key;
+      if (!Array.isArray(list)) {
+        var hit0 = findCustomerOrderByIdAnyOwner(store, orderId);
+        if (!hit0) return;
+        ownerKey = hit0.emailKey;
+        list = store[ownerKey];
+      }
+      var found = false;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].orderId === orderId) {
+          list[i].status = status;
+          if (meta && typeof meta === 'object') {
+            if (meta.cancelReason != null) list[i].cancelReason = meta.cancelReason;
+            if (meta.cancelledAt != null) list[i].cancelledAt = meta.cancelledAt;
+            if (meta.adminConfirmedAt != null) list[i].adminConfirmedAt = meta.adminConfirmedAt;
+          }
+          if (window.ModevaLogs) {
+            var msg = 'Cập nhật trạng thái đơn khách: ' + orderId + ' → ' + status + ' (' + ownerKey + ')';
+            if (meta && meta.cancelReason) msg += ' · lý do: ' + meta.cancelReason;
+            ModevaLogs.append(msg, 'info');
+          }
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        var hit = findCustomerOrderByIdAnyOwner(store, orderId);
+        if (hit) {
+          ownerKey = hit.emailKey;
+          var o = store[ownerKey][hit.idx];
+          o.status = status;
+          if (meta && typeof meta === 'object') {
+            if (meta.cancelReason != null) o.cancelReason = meta.cancelReason;
+            if (meta.cancelledAt != null) o.cancelledAt = meta.cancelledAt;
+            if (meta.adminConfirmedAt != null) o.adminConfirmedAt = meta.adminConfirmedAt;
+          }
+        } else {
+          return;
+        }
+      }
+      this.saveOrdersStore(store);
+      syncAdminOrderStatusFromCustomer(orderId, status, meta);
     },
 
     /**
@@ -638,11 +892,22 @@
           email: email,
           name: name,
           role: 'customer',
+          remember: true,
           at: Date.now()
         });
         clearSessionShoppingCart();
         if (window.ModevaLogs) {
           ModevaLogs.append('Đăng ký tài khoản khách mới: ' + email, 'info');
+        }
+        if (window.ModevaApi && typeof ModevaApi.syncRegisterUser === 'function') {
+          ModevaApi.syncRegisterUser({
+            email: email,
+            fullName: name,
+            phone: phone,
+            passwordHash: cred.hashHex,
+            passwordSalt: cred.saltB64,
+            passwordKdf: 'pbkdf2-sha256'
+          });
         }
         return { ok: true };
       }).catch(function () {
@@ -696,6 +961,116 @@
       }).catch(function () {
         return { ok: false, message: 'Không lưu được mật khẩu mới.' };
       });
+    },
+
+    /**
+     * Reset toàn bộ tài khoản khách (xóa mềm đối với dữ liệu):
+     * - gỡ khách khỏi hoạt động (user / hồ sơ / đơn hiển thị)
+     * - snapshot toàn bộ phần gỡ bỏ vào modeva_admin_customer_soft_archive (có thể tra cứu / export)
+     * Giữ nguyên admin/staff.
+     */
+    resetCustomerAccounts: function () {
+      if (localStorage.getItem(CUSTOMER_RESET_ONCE_KEY) === '1') {
+        return { ok: false, message: 'Chức năng reset tài khoản khách chỉ được phép dùng 1 lần duy nhất.' };
+      }
+      var users = getUsers();
+      var removedEmails = {};
+      var keptUsers = {};
+      var removedUserEntries = {};
+
+      Object.keys(users).forEach(function (email) {
+        var u = users[email] || {};
+        var id = normalizeId(email);
+        if (u.role === 'customer') {
+          removedEmails[id] = true;
+          removedUserEntries[id] = u;
+          return;
+        }
+        keptUsers[id] = u;
+      });
+
+      var fullProfiles = this.getProfiles();
+      var profSnap = {};
+      var fullOrders = this.getOrdersStore();
+      var ordSnap = {};
+      Object.keys(removedEmails).forEach(function (em) {
+        if (fullProfiles[em]) profSnap[em] = fullProfiles[em];
+        if (fullOrders[em]) ordSnap[em] = fullOrders[em];
+      });
+
+      var dashOrdersAll = readAdminOrdersList();
+      var removedDashOrders = (Array.isArray(dashOrdersAll) ? dashOrdersAll : []).filter(function (o) {
+        var em = normalizeId(o && o.email ? o.email : '');
+        return removedEmails[em];
+      });
+
+      var removedDashCustomers = [];
+      try {
+        var dashCustomersRaw = localStorage.getItem('modeva_dash_customers');
+        var dashCustomers = dashCustomersRaw ? JSON.parse(dashCustomersRaw) : [];
+        removedDashCustomers = (Array.isArray(dashCustomers) ? dashCustomers : []).filter(function (c) {
+          var em = normalizeId(c && c.email ? c.email : '');
+          return removedEmails[em];
+        });
+      } catch (e) {}
+
+      var lastOrderSnap = null;
+      try {
+        var lr = localStorage.getItem('lastOrder');
+        if (lr) lastOrderSnap = JSON.parse(lr);
+      } catch (e) {}
+
+      appendSoftResetArchive({
+        at: new Date().toISOString(),
+        kind: 'admin_customer_reset',
+        removedEmails: Object.keys(removedEmails),
+        users: removedUserEntries,
+        profiles: profSnap,
+        customerOrders: ordSnap,
+        dashOrdersRemoved: removedDashOrders,
+        dashCustomersRemoved: removedDashCustomers,
+        lastOrder: lastOrderSnap
+      });
+
+      saveUsers(keptUsers);
+
+      // Hồ sơ khách (active)
+      this.saveProfiles({});
+      // Đơn khách (active)
+      this.saveOrdersStore({});
+
+      // Đồng bộ bảng đơn + khách của dashboard
+      try {
+        var cleanedOrders = (Array.isArray(dashOrdersAll) ? dashOrdersAll : []).filter(function (o) {
+          var em = normalizeId(o && o.email ? o.email : '');
+          return !removedEmails[em];
+        });
+        writeAdminOrdersList(cleanedOrders);
+      } catch (e) {}
+
+      try {
+        var dashCustomersRaw2 = localStorage.getItem('modeva_dash_customers');
+        var dashCustomers2 = dashCustomersRaw2 ? JSON.parse(dashCustomersRaw2) : [];
+        var cleanedCustomers = (Array.isArray(dashCustomers2) ? dashCustomers2 : []).filter(function (c) {
+          var em = normalizeId(c && c.email ? c.email : '');
+          return !removedEmails[em];
+        });
+        localStorage.setItem('modeva_dash_customers', JSON.stringify(cleanedCustomers));
+      } catch (e) {}
+
+      try { localStorage.removeItem('lastOrder'); } catch (e) {}
+
+      var sess = this.getSession();
+      if (sess && sess.role === 'customer') {
+        this.clearSession();
+      }
+
+      if (window.ModevaLogs) {
+        ModevaLogs.append('Reset toàn bộ tài khoản khách hàng', 'warning');
+      }
+
+      localStorage.setItem(CUSTOMER_RESET_ONCE_KEY, '1');
+      return { ok: true };
     },
 
     /** Cập nhật số liệu & voucher trên trang tài khoản (gọi khi đã đăng nhập khách). */
@@ -779,7 +1154,8 @@
           localStorage.removeItem(SESSION_KEY);
           return null;
         }
-        if (Date.now() - p.at > SESSION_TTL_MS) {
+        var ttl = p.remember === false ? SESSION_TTL_MS : REMEMBER_SESSION_TTL_MS;
+        if (Date.now() - p.at > ttl) {
           localStorage.removeItem(SESSION_KEY);
           return null;
         }
@@ -806,6 +1182,9 @@
         ModevaLogs.append('Đăng xuất — ' + (prev && prev.email ? prev.email + ' (' + prev.role + ')' : 'guest'), 'info');
       }
       this.clearSession();
+      if (prev && prev.role === 'customer' && prev.email) {
+        clearCustomerReloadCount(prev.email);
+      }
       window.location.href = 'account.html';
     },
 
@@ -977,5 +1356,6 @@
     }
   };
 
+  enforceCustomerReloadLimit();
   window.ModevaAuth.init();
 })();

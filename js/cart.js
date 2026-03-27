@@ -1,7 +1,23 @@
 // ===================================
 // Shopping Cart JavaScript
-// Giỏ lấy từ sessionStorage — không có sản phẩm demo mặc định
+// Giỏ lưu localStorage (bền); migrate 1 lần từ sessionStorage cũ — không seed demo mặc định
 // ===================================
+
+var MODEVA_CART_KEY = 'cartData';
+var MODEVA_CART_BADGE_KEY = 'modeva_cart';
+
+function modevaMigrateCartSessionToLocal () {
+    try {
+        if (localStorage.getItem(MODEVA_CART_KEY)) return;
+        var sess = sessionStorage.getItem(MODEVA_CART_KEY);
+        if (!sess) return;
+        localStorage.setItem(MODEVA_CART_KEY, sess);
+        sessionStorage.removeItem(MODEVA_CART_KEY);
+        var b = sessionStorage.getItem(MODEVA_CART_BADGE_KEY);
+        if (b != null) localStorage.setItem(MODEVA_CART_BADGE_KEY, b);
+        sessionStorage.removeItem(MODEVA_CART_BADGE_KEY);
+    } catch (e) {}
+}
 
 let cartData = {
     items: [],
@@ -21,7 +37,8 @@ function escHtml (s) {
 
 function loadCartDataFromStorage () {
     try {
-        const raw = sessionStorage.getItem('cartData');
+        modevaMigrateCartSessionToLocal();
+        const raw = localStorage.getItem(MODEVA_CART_KEY);
         if (!raw) return;
         const parsed = JSON.parse(raw);
         cartData = Object.assign(cartData, parsed);
@@ -32,9 +49,10 @@ function loadCartDataFromStorage () {
 
 function persistCartToStorage () {
     try {
-        sessionStorage.setItem('cartData', JSON.stringify(cartData));
+        modevaMigrateCartSessionToLocal();
+        localStorage.setItem(MODEVA_CART_KEY, JSON.stringify(cartData));
         const totalQty = (cartData.items || []).reduce((s, i) => s + (parseInt(i.qty, 10) || 0), 0);
-        sessionStorage.setItem('modeva_cart', String(totalQty));
+        localStorage.setItem(MODEVA_CART_BADGE_KEY, String(totalQty));
         if (typeof window.updateBadges === 'function') {
             window.updateBadges(totalQty);
         }
@@ -231,8 +249,9 @@ function showEmptyCart () {
     const voucherInput = document.getElementById('voucherCode');
     if (voucherInput) voucherInput.value = '';
 
-    sessionStorage.setItem('cartData', JSON.stringify(cartData));
-    sessionStorage.setItem('modeva_cart', '0');
+    modevaMigrateCartSessionToLocal();
+    localStorage.setItem(MODEVA_CART_KEY, JSON.stringify(cartData));
+    localStorage.setItem(MODEVA_CART_BADGE_KEY, '0');
 
     if (typeof window.updateBadges === 'function') {
         window.updateBadges(0);
@@ -292,7 +311,8 @@ function updateCart () {
     }
 
     try {
-        sessionStorage.setItem('cartData', JSON.stringify(cartData));
+        modevaMigrateCartSessionToLocal();
+        localStorage.setItem(MODEVA_CART_KEY, JSON.stringify(cartData));
     } catch (e) {
         return;
     }
@@ -378,7 +398,8 @@ function proceedToCheckout () {
     cartData.items = items;
     updateCart();
 
-    sessionStorage.setItem('cartData', JSON.stringify(cartData));
+    modevaMigrateCartSessionToLocal();
+    localStorage.setItem(MODEVA_CART_KEY, JSON.stringify(cartData));
     if (window.ModevaLogs) {
         ModevaLogs.append('Giỏ hàng: chuyển sang thanh toán — ' + items.length + ' dòng đã chọn', 'info');
     }

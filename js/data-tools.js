@@ -10,6 +10,7 @@
     'modeva_auth_users',
     'modeva_customer_profiles',
     'modeva_customer_orders',
+    'modeva_admin_customer_soft_archive',
     'modeva_dash_products',
     'modeva_dash_categories',
     'modeva_dash_inventory',

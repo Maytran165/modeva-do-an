@@ -11,6 +11,17 @@ let checkoutData = {
     deliveryMethod: 'standard'
 };
 
+const BANK_QR_CONFIG = {
+    bankCode: 'MB',
+    accountNo: '160513041704',
+    accountNameDisplay: 'TRẦN BẢO NGỌC',
+    accountNameQr: 'TRAN BAO NGOC'
+};
+
+let checkoutPreviewOrderCode = 'ĐH' + Math.floor(100000 + Math.random() * 900000);
+let pendingBankOrderId = null;
+let isPlacingOrder = false;
+
 function renderCheckoutVouchers () {
     const host = document.getElementById('checkoutVoucherList');
     if (!host) return;
@@ -94,6 +105,7 @@ function selectPayment(element, method) {
     const bankInfo = document.getElementById('bankInfo');
     if (method === 'bank') {
         bankInfo.style.display = 'block';
+        updateBankTransferInfo();
     } else {
         bankInfo.style.display = 'none';
     }
@@ -138,6 +150,81 @@ function updateCheckoutSummary() {
     } else {
         discountRow.style.display = 'none';
     }
+
+    updateBankTransferInfo();
+}
+
+function buildBankQrUrl (amount, orderCode) {
+    const info = 'thanh toan don hang ' + String(orderCode || '').trim();
+    const base = 'https://img.vietqr.io/image/' + BANK_QR_CONFIG.bankCode + '-' + BANK_QR_CONFIG.accountNo + '-compact2.png';
+    const query =
+        '?amount=' + encodeURIComponent(String(Math.max(0, Math.round(Number(amount) || 0)))) +
+        '&addInfo=' + encodeURIComponent(info) +
+        '&accountName=' + encodeURIComponent(BANK_QR_CONFIG.accountNameQr);
+    return base + query;
+}
+
+function updateBankTransferInfo (orderCodeOverride) {
+    const total = checkoutData.subtotal - checkoutData.discount + checkoutData.shipping;
+    const orderCode = String(orderCodeOverride || checkoutPreviewOrderCode || '').trim();
+
+    const amountText = formatCurrency(total);
+    const amountEl = document.getElementById('bankTransferAmount');
+    if (amountEl) amountEl.textContent = amountText;
+
+    const orderCodeEl = document.getElementById('orderCode');
+    if (orderCodeEl) orderCodeEl.textContent = orderCode;
+
+    const qrCaptionEl = document.getElementById('bankQrCaption');
+    if (qrCaptionEl) qrCaptionEl.textContent = 'Quét mã để thanh toán đơn ' + orderCode;
+
+    const qrAmountBadgeEl = document.getElementById('bankQrAmountBadge');
+    if (qrAmountBadgeEl) qrAmountBadgeEl.textContent = amountText;
+
+    const qrImg = document.getElementById('bankQrImage');
+    if (qrImg) {
+        qrImg.src = buildBankQrUrl(total, orderCode);
+    }
+
+    const paidBtn = document.getElementById('bankPaidBtn');
+    if (paidBtn) {
+        paidBtn.style.display = pendingBankOrderId ? 'inline-flex' : 'none';
+    }
+}
+
+function markOrderAsPaid (orderData) {
+    if (!orderData || !orderData.orderId) return { ok: false };
+    const sess = window.ModevaAuth && ModevaAuth.getSession ? ModevaAuth.getSession() : null;
+    const customerEmail = orderData.ownerEmail
+        ? String(orderData.ownerEmail).trim().toLowerCase()
+        : (sess && sess.email
+            ? String(sess.email).trim().toLowerCase()
+            : (orderData.customer && orderData.customer.email
+                ? String(orderData.customer.email).trim().toLowerCase()
+                : ''));
+    const paidAt = new Date().toISOString();
+
+    try {
+        const raw = localStorage.getItem('lastOrder');
+        const src = raw ? JSON.parse(raw) : null;
+        const merged = (src && src.orderId === orderData.orderId) ? src : orderData;
+        merged.paidAt = paidAt;
+        merged.paymentStatus = 'paid';
+        localStorage.setItem('lastOrder', JSON.stringify(merged));
+    } catch (e) {}
+
+    if (window.ModevaAuth && customerEmail && typeof ModevaAuth.markCustomerOrderPaidOnce === 'function') {
+        const res = ModevaAuth.markCustomerOrderPaidOnce(customerEmail, orderData.orderId, {
+            method: orderData.paymentMethod || ''
+        });
+        if (!res || !res.ok) return res || { ok: false, message: 'Không thể xác nhận thanh toán.' };
+    } else if (window.ModevaAuth && customerEmail && typeof ModevaAuth.setCustomerOrderStatus === 'function') {
+        ModevaAuth.setCustomerOrderStatus(customerEmail, orderData.orderId, 'completed');
+    }
+    if (window.ModevaApi && typeof ModevaApi.syncOrderPayment === 'function') {
+        ModevaApi.syncOrderPayment({ orderId: orderData.orderId, paidAt: paidAt });
+    }
+    return { ok: true };
 }
 
 function formatVariantForCheckout (variantRaw) {
@@ -207,9 +294,15 @@ function toggleSavedAddresses() {
 
 // Place order — chỉ thành công khi đã đăng nhập khách + có sản phẩm từ giỏ hàng
 function placeOrder() {
+    if (isPlacingOrder) {
+        showNotification('Đơn đang được xử lý, vui lòng không bấm nhiều lần.', 'info');
+        return;
+    }
+    isPlacingOrder = true;
     if (!window.ModevaAuth) {
         if (window.ModevaLogs) ModevaLogs.append('Checkout: đặt hàng thất bại — thiếu module xác thực', 'error');
         showNotification('Không thể xác thực. Vui lòng tải lại trang.', 'error');
+        isPlacingOrder = false;
         return;
     }
     const sess = ModevaAuth.getSession();
@@ -219,6 +312,7 @@ function placeOrder() {
         setTimeout(function () {
             window.location.href = 'account.html';
         }, 1600);
+        isPlacingOrder = false;
         return;
     }
 
@@ -226,6 +320,7 @@ function placeOrder() {
     if (!lineItems.length) {
         if (window.ModevaLogs) ModevaLogs.append('Checkout: đặt hàng bị từ chối — giỏ không có dòng hàng', 'warning');
         showNotification('Chưa có sản phẩm thanh toán. Hãy thêm hàng vào giỏ, chọn sản phẩm rồi vào thanh toán.', 'error');
+        isPlacingOrder = false;
         return;
     }
 
@@ -240,12 +335,14 @@ function placeOrder() {
     
     if (!fullName || !phoneRaw || !province || !district || !ward || !address) {
         showNotification('Vui lòng điền đầy đủ thông tin giao hàng', 'error');
+        isPlacingOrder = false;
         return;
     }
     
     if (!/^\d{10}$/.test(phone)) {
         showNotification('Số điện thoại phải đúng 10 chữ số', 'error');
         document.getElementById('phone').focus();
+        isPlacingOrder = false;
         return;
     }
     document.getElementById('phone').value = phone;
@@ -255,11 +352,13 @@ function placeOrder() {
     if (!emailRaw) {
         showNotification('Vui lòng nhập email @gmail.com để nhận thông tin đơn hàng', 'error');
         if (emailEl) emailEl.focus();
+        isPlacingOrder = false;
         return;
     }
     if (!/^[^\s@]+@gmail\.com$/.test(emailRaw)) {
         showNotification('Email nhận đơn phải là địa chỉ @gmail.com', 'error');
         if (emailEl) emailEl.focus();
+        isPlacingOrder = false;
         return;
     }
     if (emailEl) emailEl.value = emailRaw;
@@ -267,6 +366,7 @@ function placeOrder() {
     // Create order
     const orderData = {
         orderId: 'ĐH' + Math.floor(Math.random() * 1000000),
+        ownerEmail: sess.email,
         customer: {
             fullName,
             phone,
@@ -287,8 +387,25 @@ function placeOrder() {
         voucherCode: checkoutData.voucherCode,
         shipping: checkoutData.shipping,
         total: checkoutData.subtotal - checkoutData.discount + checkoutData.shipping,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        paymentStatus: checkoutData.paymentMethod === 'bank' ? 'pending' : 'paid'
     };
+
+    // Update "nội dung chuyển khoản" so khách thanh toán theo đúng đơn mới tạo
+    const bankInfoEl = document.getElementById('bankInfo');
+    if (checkoutData.paymentMethod === 'bank' && bankInfoEl) {
+        bankInfoEl.style.display = 'block';
+    }
+
+    const orderCodeEl = document.getElementById('orderCode');
+    if (orderCodeEl) orderCodeEl.textContent = orderData.orderId;
+
+    const bankAmountEl = document.getElementById('bankTransferAmount');
+    if (bankAmountEl) bankAmountEl.textContent = formatCurrency(orderData.total);
+
+    const bankQrCaptionEl = document.getElementById('bankQrCaption');
+    if (bankQrCaptionEl) bankQrCaptionEl.textContent = 'Quét mã để thanh toán đơn #' + orderData.orderId;
+    updateBankTransferInfo(orderData.orderId);
     
     // Store order in localStorage
     localStorage.setItem('lastOrder', JSON.stringify(orderData));
@@ -301,9 +418,33 @@ function placeOrder() {
     if (window.ModevaLogs) {
         ModevaLogs.append('Checkout: hoàn tất đặt hàng — ' + orderData.orderId + ' — tổng ' + orderData.total + 'đ', 'info');
     }
-    
-    // Show success modal
+    if (window.ModevaApi && typeof ModevaApi.syncOrder === 'function') {
+        ModevaApi.syncOrder(orderData);
+    }
+
+    // Bank transfer flow: wait for user to pay in banking app, then confirm.
+    if (checkoutData.paymentMethod === 'bank') {
+        pendingBankOrderId = orderData.orderId;
+        updateBankTransferInfo(orderData.orderId);
+        const bankInfoEl2 = document.getElementById('bankInfo');
+        if (bankInfoEl2) {
+            bankInfoEl2.style.display = 'block';
+            bankInfoEl2.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showNotification('Đơn đã tạo. Vui lòng quét QR và bấm Thanh toán trong app MB Bank, sau đó bấm "Tôi đã thanh toán".', 'info');
+        isPlacingOrder = false;
+        return;
+    }
+
+    // Other methods: complete immediately (demo)
+    const paidRes = markOrderAsPaid(orderData);
+    if (!paidRes || !paidRes.ok) {
+        showNotification((paidRes && paidRes.message) ? paidRes.message : 'Không thể xác nhận thanh toán.', 'error');
+        isPlacingOrder = false;
+        return;
+    }
     showSuccessModal(orderData.orderId);
+    isPlacingOrder = false;
 }
 
 // Show success modal
@@ -320,9 +461,13 @@ function showSuccessModal(orderId) {
         element.textContent = orderId;
     });
     
-    // Clear cart
-    sessionStorage.removeItem('cartData');
-    sessionStorage.setItem('modeva_cart', '0');
+    // Clear cart (localStorage — đồng bộ với giỏ trang chủ / danh mục)
+    try {
+        localStorage.removeItem('cartData');
+        localStorage.setItem('modeva_cart', '0');
+        sessionStorage.removeItem('cartData');
+        sessionStorage.removeItem('modeva_cart');
+    } catch (e) {}
     if (typeof window.updateBadges === 'function') {
         window.updateBadges(0);
     }
@@ -520,8 +665,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load cart data from session storage
-    const cartData = sessionStorage.getItem('cartData');
+    // Load cart (localStorage; fallback migrate từ sessionStorage cũ)
+    try {
+        if (!localStorage.getItem('cartData') && sessionStorage.getItem('cartData')) {
+            localStorage.setItem('cartData', sessionStorage.getItem('cartData'));
+            sessionStorage.removeItem('cartData');
+            const b = sessionStorage.getItem('modeva_cart');
+            if (b != null) localStorage.setItem('modeva_cart', b);
+            sessionStorage.removeItem('modeva_cart');
+        }
+    } catch (e) {}
+    const cartData = localStorage.getItem('cartData');
     if (cartData) {
         const data = JSON.parse(cartData);
         checkoutData = { ...checkoutData, ...data };
@@ -542,6 +696,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     renderCheckoutVouchers();
+    updateBankTransferInfo();
+
+    // Restore pending bank order state (if user refreshed page)
+    try {
+        const lastRaw = localStorage.getItem('lastOrder');
+        if (lastRaw) {
+            const last = JSON.parse(lastRaw);
+            if (last && last.orderId && last.paymentMethod === 'bank' && !last.paidAt) {
+                pendingBankOrderId = last.orderId;
+                updateBankTransferInfo(last.orderId);
+            }
+        }
+    } catch (e) {}
+
+    // Bank paid confirmation button
+    const paidBtn = document.getElementById('bankPaidBtn');
+    if (paidBtn && !paidBtn.dataset.bound) {
+        paidBtn.dataset.bound = '1';
+        paidBtn.addEventListener('click', function () {
+            if (!pendingBankOrderId) {
+                showNotification('Chưa có đơn chuyển khoản đang chờ thanh toán.', 'error');
+                return;
+            }
+            if (paidBtn.disabled) return;
+            paidBtn.disabled = true;
+            let paidOrderData = null;
+            try {
+                const lastRaw = localStorage.getItem('lastOrder');
+                if (lastRaw) {
+                    const last = JSON.parse(lastRaw);
+                    if (last && last.orderId === pendingBankOrderId) {
+                        last.paidAt = new Date().toISOString();
+                        last.paymentStatus = 'paid';
+                        localStorage.setItem('lastOrder', JSON.stringify(last));
+                        paidOrderData = last;
+                    }
+                }
+            } catch (e) {}
+            const doneId = pendingBankOrderId;
+            pendingBankOrderId = null;
+            const paidRes = markOrderAsPaid(paidOrderData || { orderId: doneId, customer: {} });
+            if (!paidRes || !paidRes.ok) {
+                showNotification((paidRes && paidRes.message) ? paidRes.message : 'Đơn đã được thanh toán trước đó.', 'error');
+                paidBtn.disabled = false;
+                return;
+            }
+            updateBankTransferInfo(doneId);
+            showSuccessModal(doneId);
+            paidBtn.disabled = false;
+        });
+    }
 
     console.log('Checkout page initialized');
 });

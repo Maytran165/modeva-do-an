@@ -762,17 +762,31 @@ function prefillSearchFromURL () {
 }
 
 /* ============================================================
-   CART  — sessionStorage (không seed demo) + badge
+   CART  — localStorage (bền; migrate 1 lần từ sessionStorage cũ) + badge
    ============================================================ */
 (function modevaCartStoreInit () {
   const KEY = 'cartData';
+  const BADGE = 'modeva_cart';
+  function migrateSessionToLocal () {
+    try {
+      if (localStorage.getItem(KEY)) return;
+      const sess = sessionStorage.getItem(KEY);
+      if (!sess) return;
+      localStorage.setItem(KEY, sess);
+      sessionStorage.removeItem(KEY);
+      const b = sessionStorage.getItem(BADGE);
+      if (b != null) localStorage.setItem(BADGE, b);
+      sessionStorage.removeItem(BADGE);
+    } catch (e) {}
+  }
   function defaults () {
     return { items: [], subtotal: 0, discount: 0, shipping: 30000, voucherCode: null };
   }
   window.ModevaCartStore = {
     read () {
+      migrateSessionToLocal();
       try {
-        const raw = sessionStorage.getItem(KEY);
+        const raw = localStorage.getItem(KEY);
         if (!raw) return defaults();
         return { ...defaults(), ...JSON.parse(raw) };
       } catch (e) {
@@ -780,9 +794,10 @@ function prefillSearchFromURL () {
       }
     },
     write (data) {
-      sessionStorage.setItem(KEY, JSON.stringify(data));
+      migrateSessionToLocal();
+      localStorage.setItem(KEY, JSON.stringify(data));
       const totalQty = (data.items || []).reduce((s, i) => s + (parseInt(i.qty, 10) || 0), 0);
-      sessionStorage.setItem('modeva_cart', String(totalQty));
+      localStorage.setItem(BADGE, String(totalQty));
       if (typeof window.updateBadges === 'function') window.updateBadges(totalQty);
     },
     addOrMergeLine (line) {
@@ -853,7 +868,16 @@ function addCatalogLineFromCard (card) {
 }
 
 function syncCartBadge () {
-  const stored = parseInt(sessionStorage.getItem('modeva_cart') || '0', 10);
+  try {
+    if (!localStorage.getItem('cartData') && sessionStorage.getItem('cartData')) {
+      localStorage.setItem('cartData', sessionStorage.getItem('cartData'));
+      sessionStorage.removeItem('cartData');
+      const b = sessionStorage.getItem('modeva_cart');
+      if (b != null) localStorage.setItem('modeva_cart', b);
+      sessionStorage.removeItem('modeva_cart');
+    }
+  } catch (e) {}
+  const stored = parseInt(localStorage.getItem('modeva_cart') || '0', 10);
   updateBadges(stored);
 }
 
@@ -871,9 +895,9 @@ function updateBadges (count) {
 window.updateBadges = updateBadges;
 
 window.updateCartBadge = function (increment = 1) {
-  const stored = parseInt(sessionStorage.getItem('modeva_cart') || '0', 10);
+  const stored = parseInt(localStorage.getItem('modeva_cart') || '0', 10);
   const next   = stored + increment;
-  sessionStorage.setItem('modeva_cart', String(next));
+  localStorage.setItem('modeva_cart', String(next));
   updateBadges(next);
 };
 
