@@ -26,11 +26,22 @@ function formatOrderDate (iso) {
 }
 
 const STATUS_META = {
+    pending: { label: 'Chờ xác nhận', icon: 'fa-hourglass-half', cls: 'processing' },
     processing: { label: 'Đang xử lý', icon: 'fa-clock', cls: 'processing' },
     shipping: { label: 'Đang giao hàng', icon: 'fa-truck', cls: 'shipping' },
     delivered: { label: 'Đã giao hàng', icon: 'fa-check-circle', cls: 'delivered' },
     cancelled: { label: 'Đã hủy', icon: 'fa-times-circle', cls: 'cancelled' }
 };
+let currentEditingOrderId = null;
+
+function canEditOrderClientSide (o) {
+    if (!o || !o.createdAt) return false;
+    if (o.adminConfirmedAt) return false;
+    if (o.status === 'shipping' || o.status === 'cancelled' || o.status === 'delivered' || o.status === 'completed') return false;
+    const created = new Date(o.createdAt).getTime();
+    if (!created || Number.isNaN(created)) return false;
+    return (Date.now() - created) <= 24 * 60 * 60 * 1000;
+}
 
 function renderOrderCardHtml (o) {
     const st = STATUS_META[o.status] || STATUS_META.processing;
@@ -49,9 +60,16 @@ function renderOrderCardHtml (o) {
         );
     }).join('');
 
-    const cancelBtn = o.status === 'processing'
+    const canEdit = canEditOrderClientSide(o);
+    const cancelBtn = canEdit && (o.status === 'pending' || o.status === 'processing')
         ? '<button type="button" class="btn btn-secondary-modern" onclick="cancelOrder(\'' + escOrder(o.orderId).replace(/'/g, "\\'") + '\')">Hủy đơn</button>'
         : '';
+    const editBtn = canEdit
+        ? '<button type="button" class="btn btn-secondary-modern" onclick="editOrderInfo(\'' + escOrder(o.orderId).replace(/'/g, "\\'") + '\')">Sửa thông tin</button>'
+        : '';
+    const lockNote = canEdit
+        ? '<p class="admin-hint">Bạn có thể sửa thông tin cá nhân và phương thức thanh toán trong 24 giờ đầu.</p>'
+        : '<p class="admin-hint">Đơn đã khóa chỉnh sửa (quá 24 giờ hoặc đã được Admin/Staff xác nhận).</p>';
 
     // Khách hàng không được in phiếu giao (chỉ Admin/Staff).
     const printBtn = '';
@@ -68,10 +86,10 @@ function renderOrderCardHtml (o) {
         '<div class="order-items">' + itemsHtml + '</div>' +
         '<div class="order-footer">' +
         '<div class="order-total"><span>Tổng tiền:</span><span class="total-amount">' + formatCurrencyOrder(o.total || 0) + '</span></div>' +
-        '<div class="order-actions">' + cancelBtn +
+        '<div class="order-actions">' + cancelBtn + editBtn +
         printBtn +
         '<button type="button" class="btn btn-primary-modern" onclick="viewOrderDetail(\'' + escOrder(o.orderId).replace(/'/g, "\\'") + '\')">Xem chi tiết</button>' +
-        '</div></div>' +
+        '</div></div>' + lockNote +
         '<div class="progress-tracker">' +
         '<div class="progress-step completed"><div class="step-icon"><i class="fas fa-check-circle"></i></div><div class="step-content"><h5>Đơn hàng đã đặt</h5><p>' + formatOrderDate(o.createdAt) + '</p></div></div>' +
         '<div class="progress-step ' + (o.status === 'processing' ? 'active' : (o.status === 'cancelled' ? '' : 'completed')) + '"><div class="step-icon"><i class="fas fa-box"></i></div><div class="step-content"><h5>Xử lý</h5><p>' + (o.status === 'cancelled' ? 'Đã hủy' : 'Đang cập nhật') + '</p></div></div>' +
@@ -130,9 +148,12 @@ function filterOrders (status, btn) {
 
     const orders = document.querySelectorAll('#ordersListMount .order-card');
     orders.forEach(function (order) {
+        const orderStatus = order.getAttribute('data-status');
         if (status === 'all') {
             order.style.display = 'block';
-        } else if (order.getAttribute('data-status') === status) {
+        } else if (status === 'processing' && (orderStatus === 'processing' || orderStatus === 'pending')) {
+            order.style.display = 'block';
+        } else if (orderStatus === status) {
             order.style.display = 'block';
         } else {
             order.style.display = 'none';
@@ -147,11 +168,47 @@ function filterOrders (status, btn) {
 }
 
 function cancelOrder (orderId) {
-    if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+    const sessCheck = window.ModevaAuth && ModevaAuth.getSession && ModevaAuth.getSession();
+    if (sessCheck && typeof ModevaAuth.canCustomerEditOrder === 'function') {
+        const editable = ModevaAuth.canCustomerEditOrder(sessCheck.email, orderId);
+        if (!editable || !editable.ok) {
+            showNotification((editable && editable.message) ? editable.message : 'Đơn đã khóa, không thể hủy.', 'error');
+            return;
+        }
+    }
+    const reasons = [
+        'Tìm thấy giá tốt hơn',
+        'Không còn nhu cầu',
+        'Muốn thay đổi sản phẩm',
+        'Thời gian giao hàng quá lâu',
+        'Lý do khác'
+    ];
+    const guide = reasons.map(function (r, i) { return (i + 1) + '. ' + r; }).join('\n');
+    const pickRaw = prompt('Chọn lý do hủy đơn (nhập số 1-5):\n' + guide, '1');
+    if (pickRaw == null) return;
+    const pick = parseInt(String(pickRaw).trim(), 10);
+    if (isNaN(pick) || pick < 1 || pick > reasons.length) {
+        showNotification('Lý do hủy không hợp lệ. Vui lòng thử lại.', 'error');
+        return;
+    }
+    let reason = reasons[pick - 1];
+    if (reason === 'Lý do khác') {
+        const other = prompt('Vui lòng nhập lý do hủy đơn:', '');
+        if (other == null) return;
+        if (!String(other).trim()) {
+            showNotification('Bạn cần nhập lý do khi chọn "Lý do khác".', 'error');
+            return;
+        }
+        reason = String(other).trim();
+    }
+    if (!confirm('Bạn có chắc muốn hủy đơn hàng này?\nLý do: ' + reason)) return;
 
     const sess = window.ModevaAuth && ModevaAuth.getSession();
     if (sess && sess.role === 'customer') {
-        ModevaAuth.setCustomerOrderStatus(sess.email, orderId, 'cancelled');
+        ModevaAuth.setCustomerOrderStatus(sess.email, orderId, 'cancelled', {
+            cancelReason: reason,
+            cancelledAt: new Date().toISOString()
+        });
     }
 
     const orderCard = findOrderCard(orderId);
@@ -170,7 +227,7 @@ function cancelOrder (orderId) {
         }
         const progress = orderCard.querySelector('.progress-tracker');
         if (progress) progress.remove();
-        showNotification('Đã hủy đơn hàng thành công', 'success');
+        showNotification('Đã hủy đơn hàng thành công. Lý do: ' + reason, 'success');
         updateTabCounts();
     }
 }
@@ -198,6 +255,12 @@ function closeModal () {
     });
 }
 
+function closeEditOrderModal () {
+    const modal = document.getElementById('orderEditModal');
+    if (modal) modal.classList.remove('show');
+    currentEditingOrderId = null;
+}
+
 function trackShipping (trackingCode) {
     showNotification('Theo dõi vận đơn: ' + trackingCode, 'info');
     window.open('https://ghn.vn/tracking?code=' + encodeURIComponent(trackingCode), '_blank');
@@ -214,6 +277,110 @@ function reviewOrder (orderId) {
     showNotification('Chức năng đánh giá đang được phát triển', 'info');
 }
 
+function editOrderInfo (orderId) {
+    const sess = window.ModevaAuth && ModevaAuth.getSession && ModevaAuth.getSession();
+    if (!sess || sess.role !== 'customer' || !window.ModevaAuth) return;
+    if (typeof ModevaAuth.canCustomerEditOrder === 'function') {
+        const chk = ModevaAuth.canCustomerEditOrder(sess.email, orderId);
+        if (!chk || !chk.ok) {
+            showNotification((chk && chk.message) ? chk.message : 'Đơn đã khóa chỉnh sửa.', 'error');
+            return;
+        }
+    }
+    const order = getOrderFromStorage(orderId);
+    if (!order) {
+        showNotification('Không tìm thấy đơn hàng.', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('orderEditModal');
+    if (!modal) return;
+    const customer = order.customer || {};
+    const addr = customer.address || {};
+
+    const fullNameEl = document.getElementById('editFullName');
+    const phoneEl = document.getElementById('editPhone');
+    const emailEl = document.getElementById('editEmail');
+    const provinceEl = document.getElementById('editProvince');
+    const districtEl = document.getElementById('editDistrict');
+    const wardEl = document.getElementById('editWard');
+    const addressEl = document.getElementById('editAddress');
+    const paymentEl = document.getElementById('editPaymentMethod');
+    const noteEl = document.getElementById('editOrderNote');
+
+    if (fullNameEl) fullNameEl.value = customer.fullName || '';
+    if (phoneEl) phoneEl.value = customer.phone || '';
+    if (emailEl) emailEl.value = customer.email || sess.email || '';
+    if (provinceEl) provinceEl.value = addr.province || '';
+    if (districtEl) districtEl.value = addr.district || '';
+    if (wardEl) wardEl.value = addr.ward || '';
+    if (addressEl) addressEl.value = addr.address || '';
+    if (paymentEl) paymentEl.value = order.paymentMethod || 'cod';
+    if (noteEl) noteEl.value = order.note || '';
+
+    currentEditingOrderId = orderId;
+    modal.classList.add('show');
+}
+
+function submitOrderEditForm (ev) {
+    ev.preventDefault();
+    if (!currentEditingOrderId || !window.ModevaAuth) return;
+    const sess = ModevaAuth.getSession();
+    if (!sess || sess.role !== 'customer') return;
+
+    const fullName = (document.getElementById('editFullName').value || '').trim();
+    const phoneRaw = (document.getElementById('editPhone').value || '').trim();
+    const phone = phoneRaw.replace(/\D/g, '');
+    const email = (document.getElementById('editEmail').value || '').trim().toLowerCase();
+    const province = (document.getElementById('editProvince').value || '').trim();
+    const district = (document.getElementById('editDistrict').value || '').trim();
+    const ward = (document.getElementById('editWard').value || '').trim();
+    const address = (document.getElementById('editAddress').value || '').trim();
+    const paymentMethod = (document.getElementById('editPaymentMethod').value || '').trim().toLowerCase();
+    const note = (document.getElementById('editOrderNote').value || '').trim();
+
+    if (!fullName || !phone || !email || !province || !district || !ward || !address) {
+        showNotification('Vui lòng điền đầy đủ thông tin bắt buộc.', 'error');
+        return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+        showNotification('Số điện thoại phải đúng 10 chữ số.', 'error');
+        return;
+    }
+    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
+        showNotification('Email nhận đơn phải là địa chỉ @gmail.com.', 'error');
+        return;
+    }
+    if (!['cod', 'momo', 'bank'].includes(paymentMethod)) {
+        showNotification('Phương thức thanh toán không hợp lệ.', 'error');
+        return;
+    }
+
+    const res = ModevaAuth.updateCustomerOrderInFirst24h(sess.email, currentEditingOrderId, {
+        paymentMethod: paymentMethod,
+        note: note,
+        customer: {
+            fullName: fullName,
+            phone: phone,
+            email: email,
+            address: {
+                province: province,
+                district: district,
+                ward: ward,
+                address: address
+            }
+        }
+    });
+    if (!res || !res.ok) {
+        showNotification((res && res.message) ? res.message : 'Không thể cập nhật đơn hàng.', 'error');
+        return;
+    }
+
+    closeEditOrderModal();
+    showNotification('Đã cập nhật thông tin đơn hàng.', 'success');
+    refreshOrdersFromStorage();
+}
+
 function findOrderCard (orderId) {
     return document.querySelector('#ordersListMount .order-card[data-order-id="' + orderId.replace(/"/g, '') + '"]');
 }
@@ -222,7 +389,7 @@ function updateTabCounts () {
     const root = document.getElementById('ordersListMount');
     if (!root) return;
     const allCount = root.querySelectorAll('.order-card').length;
-    const processingCount = root.querySelectorAll('.order-card[data-status="processing"]').length;
+    const processingCount = root.querySelectorAll('.order-card[data-status="processing"], .order-card[data-status="pending"]').length;
     const shippingCount = root.querySelectorAll('.order-card[data-status="shipping"]').length;
     const deliveredCount = root.querySelectorAll('.order-card[data-status="delivered"]').length;
     const cancelledCount = root.querySelectorAll('.order-card[data-status="cancelled"]').length;
@@ -326,4 +493,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('orderSearchInput');
     if (searchBtn) searchBtn.addEventListener('click', applyOrderSearch);
     if (searchInput) searchInput.addEventListener('input', applyOrderSearch);
+
+    const editForm = document.getElementById('orderEditForm');
+    if (editForm) {
+        editForm.addEventListener('submit', submitOrderEditForm);
+    }
 });

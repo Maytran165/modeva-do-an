@@ -27,6 +27,32 @@ let cartData = {
     voucherCode: null
 };
 
+function normalizeCartShape (src) {
+    var base = {
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        shipping: 30000,
+        voucherCode: null
+    };
+    var out = Object.assign({}, base, src || {});
+    if (!Array.isArray(out.items)) out.items = [];
+    out.items = out.items.map(function (it) {
+        var x = it || {};
+        return {
+            lineId: x.lineId || (String(x.productId || '') + '|' + String(x.variant || '')),
+            productId: x.productId || '',
+            name: x.name || 'Sản phẩm',
+            variant: x.variant || '',
+            qty: Math.max(1, parseInt(x.qty, 10) || 1),
+            price: Math.max(0, parseInt(x.price, 10) || 0),
+            priceOriginal: x.priceOriginal != null ? (parseInt(x.priceOriginal, 10) || null) : null,
+            image: x.image || ''
+        };
+    });
+    return out;
+}
+
 function escHtml (s) {
     return String(s == null ? '' : s)
         .replace(/&/g, '&amp;')
@@ -38,11 +64,19 @@ function escHtml (s) {
 function loadCartDataFromStorage () {
     try {
         modevaMigrateCartSessionToLocal();
+        if (window.ModevaCartStore && typeof window.ModevaCartStore.read === 'function') {
+            cartData = normalizeCartShape(window.ModevaCartStore.read());
+            return;
+        }
         const raw = localStorage.getItem(MODEVA_CART_KEY);
-        if (!raw) return;
+        if (!raw) {
+            cartData = normalizeCartShape(cartData);
+            return;
+        }
         const parsed = JSON.parse(raw);
-        cartData = Object.assign(cartData, parsed);
+        cartData = normalizeCartShape(parsed);
     } catch (e) {
+        cartData = normalizeCartShape({});
         return;
     }
 }
@@ -472,5 +506,12 @@ function bindCartPanelDelegation () {
 document.addEventListener('DOMContentLoaded', function () {
     if (!document.querySelector('.cart-items')) return;
     bindCartPanelDelegation();
+    renderCartPage();
+});
+
+window.addEventListener('storage', function (e) {
+    if (!e || !e.key) return;
+    if (e.key !== MODEVA_CART_KEY && e.key !== MODEVA_CART_BADGE_KEY) return;
+    if (!document.querySelector('.cart-items')) return;
     renderCartPage();
 });

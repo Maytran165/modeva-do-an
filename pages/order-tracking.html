@@ -163,6 +163,62 @@
         </div>
     </div>
 
+    <div class="modal" id="orderEditModal">
+        <div class="modal-content large">
+            <button class="modal-close" onclick="closeEditOrderModal()" aria-label="Đóng chỉnh sửa đơn hàng">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <h2>Cập nhật thông tin đơn hàng</h2>
+            </div>
+            <div class="modal-body">
+                <form id="orderEditForm" class="profile-form">
+                    <div class="grid-two">
+                        <label>Họ và tên *
+                            <input type="text" id="editFullName" required placeholder="Nhập họ và tên">
+                        </label>
+                        <label>Số điện thoại *
+                            <input type="tel" id="editPhone" required placeholder="10 chữ số">
+                        </label>
+                    </div>
+                    <label>Email *
+                        <input type="email" id="editEmail" required placeholder="tenban@gmail.com">
+                    </label>
+                    <div class="grid-two">
+                        <label>Tỉnh/Thành phố *
+                            <input type="text" id="editProvince" required placeholder="VD: Hà Nội">
+                        </label>
+                        <label>Quận/Huyện *
+                            <input type="text" id="editDistrict" required placeholder="VD: Cầu Giấy">
+                        </label>
+                    </div>
+                    <label>Phường/Xã *
+                        <input type="text" id="editWard" required placeholder="VD: Dịch Vọng">
+                    </label>
+                    <label>Địa chỉ cụ thể *
+                        <input type="text" id="editAddress" required placeholder="Số nhà, tên đường...">
+                    </label>
+                    <div class="grid-two">
+                        <label>Phương thức thanh toán *
+                            <select id="editPaymentMethod" required>
+                                <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+                                <option value="momo">Ví điện tử MoMo</option>
+                                <option value="bank">Chuyển khoản ngân hàng</option>
+                            </select>
+                        </label>
+                        <label>Ghi chú đơn hàng
+                            <input type="text" id="editOrderNote" placeholder="Ví dụ: giao giờ hành chính">
+                        </label>
+                    </div>
+                    <div class="profile-actions">
+                        <button type="button" class="btn btn-secondary-modern" onclick="closeEditOrderModal()">Hủy</button>
+                        <button type="submit" class="btn btn-primary-modern">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/modeva-logs.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>

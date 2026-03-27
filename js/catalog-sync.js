@@ -46,7 +46,7 @@
         price: 890000,
         salePrice: 690000,
         images: 3,
-        imageUrl: 'https://images.unsplash.com/photo-1596755094514-f87e34085b87?auto=format&fit=crop&w=900&q=80',
+        imageUrl: '../images/ao-so-mi-linen.png',
         lineLabel: 'Nam • Áo nam',
         newest: 101
       },
@@ -59,7 +59,7 @@
         price: 1190000,
         salePrice: null,
         images: 4,
-        imageUrl: 'https://images.unsplash.com/photo-1473966968600-fa8018698690?auto=format&fit=crop&w=900&q=80',
+        imageUrl: '../images/quan-tay-slim.png',
         lineLabel: 'Nam • Quần nam',
         newest: 100
       },
@@ -85,7 +85,7 @@
         price: 389000,
         salePrice: null,
         images: 3,
-        imageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80',
+        imageUrl: '../images/ao-thun-premium-motion.png',
         lineLabel: 'Nam • Cotton Tech',
         newest: 104
       },
@@ -98,7 +98,7 @@
         price: 1290000,
         salePrice: null,
         images: 4,
-        imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=900&q=80',
+        imageUrl: '../images/blazer-sandstorm.png',
         lineLabel: 'Nữ • Tailoring',
         newest: 105
       },
@@ -150,7 +150,7 @@
         price: 699000,
         salePrice: 559000,
         images: 4,
-        imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a21b7b8d?auto=format&fit=crop&w=1200&q=85',
+        imageUrl: '../images/giay-sneaker-cloud-run.png',
         lineLabel: 'SNEAKER',
         newest: 114
       },
@@ -163,7 +163,7 @@
         price: 899000,
         salePrice: null,
         images: 4,
-        imageUrl: 'https://images.unsplash.com/photo-1506629903123-904e278bed34?auto=format&fit=crop&w=1200&q=85',
+        imageUrl: '../images/quan-tay-slim-tailor.png',
         lineLabel: 'BOTTOMS',
         badge: 'new',
         newest: 113
@@ -191,7 +191,7 @@
         price: 999000,
         salePrice: 649000,
         images: 4,
-        imageUrl: 'https://images.unsplash.com/photo-1524592094714-0ce0658e57ca?auto=format&fit=crop&w=1200&q=85',
+        imageUrl: '../images/dong-ho-chrono-brown.png',
         lineLabel: 'WATCH',
         badge: 'hot',
         newest: 111
@@ -233,6 +233,17 @@
       xam: 'black'
     };
     return map[k] || 'beige';
+  }
+
+  function uniqueColorOptions (colors) {
+    var seen = {};
+    return (colors || []).map(function (c) { return String(c || '').trim(); }).filter(Boolean).map(function (name) {
+      return { name: name, token: colorToFilterToken(name) };
+    }).filter(function (x) {
+      if (seen[x.token]) return false;
+      seen[x.token] = true;
+      return true;
+    });
   }
 
   function resolveLineLabel (p, cats) {
@@ -343,6 +354,59 @@
         prodChanged = true;
       }
     });
+    // Migrate default images from remote URLs to local assets.
+    products.forEach(function (p) {
+      if (!p) return;
+      if (p.id === 'p1') {
+        var current1 = String(p.imageUrl || '');
+        if (!current1 || current1.indexOf('images.unsplash.com/photo-1596755094514-f87e34085b87') !== -1) {
+          p.imageUrl = '../images/ao-so-mi-linen.png';
+          prodChanged = true;
+        }
+      }
+      if (p.id === 'p2') {
+        var current2 = String(p.imageUrl || '');
+        if (!current2 || current2.indexOf('images.unsplash.com/photo-1473966968600-fa8018698690') !== -1) {
+          p.imageUrl = '../images/quan-tay-slim.png';
+          prodChanged = true;
+        }
+      }
+      if (p.id === 'p4') {
+        var current4 = String(p.imageUrl || '');
+        if (!current4 || current4.indexOf('images.unsplash.com/photo-1521572267360-ee0c2909d518') !== -1) {
+          p.imageUrl = '../images/ao-thun-premium-motion.png';
+          prodChanged = true;
+        }
+      }
+      if (p.id === 'p5') {
+        var current5 = String(p.imageUrl || '');
+        if (!current5 || current5.indexOf('images.unsplash.com/photo-1594938298603-c8148c4dae35') !== -1) {
+          p.imageUrl = '../images/blazer-sandstorm.png';
+          prodChanged = true;
+        }
+      }
+      if (p.id === 'p9') {
+        var current9 = String(p.imageUrl || '');
+        if (!current9 || current9.indexOf('images.unsplash.com/photo-1606107557195-0e29a21b7b8d') !== -1) {
+          p.imageUrl = '../images/giay-sneaker-cloud-run.png';
+          prodChanged = true;
+        }
+      }
+      if (p.id === 'p10') {
+        var current10 = String(p.imageUrl || '');
+        if (!current10 || current10.indexOf('images.unsplash.com/photo-1506629903123-904e278bed34') !== -1) {
+          p.imageUrl = '../images/quan-tay-slim-tailor.png';
+          prodChanged = true;
+        }
+      }
+      if (p.id === 'p12') {
+        var current12 = String(p.imageUrl || '');
+        if (!current12 || current12.indexOf('images.unsplash.com/photo-1524592094714-0ce0658e57ca') !== -1) {
+          p.imageUrl = '../images/dong-ho-chrono-brown.png';
+          prodChanged = true;
+        }
+      }
+    });
     if (prodChanged) localStorage.setItem(K_PRODUCTS, JSON.stringify(products));
   }
 
@@ -382,13 +446,14 @@
       var displayPrice = getDisplayPrice(p);
       var filterCat = p.catalogCategory || catToFilterCategory(p.cat);
       var sizes = (p.sizes || []).map(function (s) { return String(s).trim(); });
-      var colorTokens = (p.colors || []).map(colorToFilterToken);
+      var colorOptions = uniqueColorOptions(p.colors || []);
+      var colorTokens = colorOptions.map(function (x) { return x.token; });
       var newest = p.newest != null ? Number(p.newest) : 1000 - index;
       var img = p.imageUrl || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80';
       var line = resolveLineLabel(p, cats);
       var nameAttr = escAttr(p.name);
       var priceStr = formatMoney(displayPrice);
-      var firstColor = (p.colors && p.colors[0]) ? String(p.colors[0]) : 'Mặc định';
+      var firstColor = colorOptions[0] ? colorOptions[0].name : 'Mặc định';
       var firstSize = (p.sizes && p.sizes[0]) ? String(p.sizes[0]) : '—';
       var priceOrigAttr = (p.salePrice != null && p.salePrice !== '' && Number(p.salePrice) < Number(p.price))
         ? String(p.price) : '';
@@ -400,10 +465,9 @@
         return '<div class="size-item catalog-size-item" data-size="' + escAttr(sz) + '">' + escAttr(sz) + '</div>';
       }).join('');
 
-      var colorItemsHtml = (p.colors || []).map(function (col) {
-        var tok = colorToFilterToken(col);
-        var bg = tokenToCssBg(tok);
-        return '<div class="color-item catalog-color-item" data-color-name="' + escAttr(col) + '" data-color-token="' + escAttr(tok) + '" style="background:' + escAttr(bg) + ';" title="' + escAttr(col) + '"></div>';
+      var colorItemsHtml = colorOptions.map(function (col) {
+        var bg = tokenToCssBg(col.token);
+        return '<div class="color-item catalog-color-item" data-color-name="' + escAttr(col.name) + '" data-color-token="' + escAttr(col.token) + '" style="background:' + escAttr(bg) + ';" title="' + escAttr(col.name) + '"></div>';
       }).join('');
       return (
         '<article class="catalog-product-card" data-product-id="' + escAttr(p.id) + '" data-product-image="' + escAttr(img) + '" data-default-color="' + escAttr(firstColor) + '" data-default-size="' + escAttr(firstSize) + '" data-price-original="' + escAttr(priceOrigAttr) + '" data-name="' + nameAttr + '" data-category="' + escAttr(filterCat) + '" data-price="' + String(displayPrice) + '" data-size="' + escAttr(sizes.join(',').toLowerCase()) + '" data-color="' + escAttr(colorTokens.join(',')) + '" data-newest="' + String(newest) + '">' +

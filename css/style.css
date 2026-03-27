@@ -1967,6 +1967,51 @@ ul, ol { list-style: none; }
   padding: var(--gap-md);
 }
 
+.fashion-checkout-page .bank-transfer-content {
+  display: flex;
+  gap: var(--gap-md);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.fashion-checkout-page .bank-qr {
+  flex: 0 0 260px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.fashion-checkout-page .bank-qr img {
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+.fashion-checkout-page .bank-qr-caption {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ink-60);
+  text-align: center;
+}
+
+.fashion-checkout-page .bank-qr-amount-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
 .fashion-checkout-page .bank-details h4 {
   font-family: var(--font-display);
   margin-bottom: 6px;
@@ -1976,6 +2021,36 @@ ul, ol { list-style: none; }
   font-size: 13px;
   color: var(--ink-80);
   line-height: 1.6;
+}
+
+.fashion-checkout-page .bank-transfer-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fashion-checkout-page .bank-transfer-actions .bank-paid-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fashion-checkout-page .bank-transfer-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-60);
+}
+
+@media (max-width: 768px) {
+  .fashion-checkout-page .bank-transfer-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .fashion-checkout-page .bank-qr {
+    flex-basis: auto;
+  }
 }
 
 .fashion-checkout-page .order-success-panel {
