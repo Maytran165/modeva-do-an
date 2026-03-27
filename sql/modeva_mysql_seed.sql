@@ -218,12 +218,12 @@ CREATE TABLE voucher_redemptions (
 -- Users
 INSERT INTO users (id, email, full_name, role, staff_position, phone, password_hash, password_salt, password_kdf)
 VALUES
-  (1, 'admin@modeva.vn', 'Quản trị viên', 'admin', NULL, NULL,
-   '48724d2be291209747f932bb6046b979eceec14e569403cff13add133c3c0c2f', NULL, NULL),
-  (2, 'staff@modeva.vn', 'Nhân viên bán hàng', 'staff', 'sales', NULL,
-   'da978c74838a8ff795dfca7a90cda5a14bff4b584e7f8949ca89daa7c28cf421', NULL, NULL),
-  (3, 'customer@modeva.vn', 'Khách hàng demo', 'customer', NULL, NULL,
-   '2e11ed22e46082ed33cd5f7a83a9bf30d8fd31ebf5f07b9ca0d4a0235875f2d5', NULL, NULL),
+  (1, 'admin.secure@modeva.vn', 'Quản trị viên', 'admin', NULL, NULL,
+   '911fde626bc1b51f9b17790de6eb5e5f27badb71d4c47eef154d75da6fad1242', NULL, NULL),
+  (2, 'staff.secure@modeva.vn', 'Nhân viên bán hàng', 'staff', 'sales', NULL,
+   '99c7ce97c25119af291d42ae2c98c77c097d448ee565d9740b5a6bcf6c1cc2da', NULL, NULL),
+  (3, 'customer.secure@modeva.vn', 'Khách hàng demo', 'customer', NULL, NULL,
+   '11aaf0a6e99b32863763407f67dba26fe47970eb55a9ae6773f206dcba65f146', NULL, NULL),
   (4, 'minh@email.com', 'Lê Minh', 'customer', NULL, '0912345678', NULL, NULL, NULL),
   (5, 'ha@email.com', 'Phạm Hà', 'customer', NULL, '0987654321', NULL, NULL, NULL),
   (6, 'an@email.com', 'VIP — Trần An', 'customer', NULL, '0909090909', NULL, NULL, NULL),

@@ -28,6 +28,7 @@
                 <a href="catalog.html">Danh mục</a>
                 <a href="customer-care.html">Hỗ trợ</a>
                 <a href="account.html" class="active">Tài khoản</a>
+                <a href="customer-profile.html">Thông tin khách hàng</a>
                 <a href="order-tracking.html">Đơn hàng</a>
             </nav>
 
@@ -75,10 +76,9 @@
                     <div class="auth-panel is-active" id="login">
                         <h2>Đăng nhập thành viên</h2>
                         <p class="form-hint auth-demo-hint">
-                            <strong>Demo nội bộ:</strong><br>
-                            Admin — <code>admin@modeva.vn</code> / <code>Admin@123*</code> → bảng quản trị.<br>
-                            Staff — <code>staff@modeva.vn</code> / <code>Staff@123*</code> → bảng nhân viên.<br>
-                            Khách — <code>customer@modeva.vn</code> / <code>Customer@123*</code> → khu vực thành viên bên dưới.
+                            <strong>Bảo mật tài khoản:</strong><br>
+                            Thông tin tài khoản nội bộ được ẩn để giảm rủi ro lộ dữ liệu.<br>
+                            Nếu bạn quên mật khẩu, vui lòng dùng chức năng <strong>Quên mật khẩu</strong> bên dưới.
                         </p>
                         <form class="auth-form" id="loginForm">
                             <label>Email hoặc số điện thoại
@@ -162,129 +162,13 @@
         </section>
 
         <section class="profile-dashboard" id="profile" hidden>
-            <div class="container profile-dashboard__grid">
-                <aside class="profile-sidebar">
-                    <div class="profile-card">
-                        <div class="profile-avatar">NT</div>
-                        <h3>Nguyễn Văn A</h3>
-                        <p>modeva.member@example.com</p>
-                        <span class="profile-tier">Thành viên</span>
-                    </div>
-                    <div class="profile-menu">
-                        <button class="profile-menu__item is-active" data-account-target="overview">Tổng quan</button>
-                        <button class="profile-menu__item" data-account-target="personal">Thông tin cá nhân</button>
-                        <button class="profile-menu__item" data-account-target="addresses">Địa chỉ giao hàng</button>
-                        <button class="profile-menu__item" data-account-target="security">Bảo mật</button>
-                    </div>
-                </aside>
-
-                <div class="profile-content">
-                    <section class="account-section is-active" id="overview">
-                        <div class="section-heading modern-heading">
-                            <div>
-                                <span class="eyebrow">Thông tin khách hàng </span>
-                                <h2>Các chi tiết thông tin </h2>
-                            </div>
-                        </div>
-                        <div class="account-stat-grid">
-                            <article>
-                                <strong id="statOrdersCompleted">0</strong>
-                                <span>Đơn hàng hoàn tất</span>
-                            </article>
-                            <article>
-                                <strong id="statVouchersCount">0</strong>
-                                <span>Voucher còn hiệu lực</span>
-                            </article>
-                            <article>
-                                <strong id="statAddressesSaved">0</strong>
-                                <span>Địa chỉ giao hàng đã lưu</span>
-                            </article>
-                        </div>
-                        <div class="customer-voucher-box">
-                            <h3 class="customer-voucher-box__title">Voucher của bạn</h3>
-                            <ul id="customerVoucherList" class="customer-voucher-list"></ul>
-                        </div>
-                        <div id="memberPromoExclusive" class="account-member-promo" hidden>
-                            <div class="account-highlight-card">
-                                <h3>Ưu đãi dành riêng cho thành viên</h3>
-                                <p>Mở sớm capsule “Weekend Glow”, giảm thêm 10% cho đơn phụ kiện khi thanh toán trước 23:59 hôm nay.</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="account-section" id="personal">
-                        <div class="section-heading modern-heading">
-                            <div>
-                                <span class="eyebrow">Cập nhật thông tin cá nhân</span>
-                                <h2>Hồ sơ cá nhân</h2>
-                            </div>
-                        </div>
-                        <form class="profile-form" onsubmit="return handleProfileSubmit(event)">
-                            <div class="grid-two">
-                                <label>Họ tên
-                                    <input type="text" id="profileFullName" value="" required>
-                                </label>
-                                <label>Số điện thoại
-                                    <input type="tel" id="profilePhone" value="" required autocomplete="tel" inputmode="numeric" placeholder="10 chữ số, VD: 0901234567" title="Nhập đúng 10 chữ số">
-                                </label>
-                            </div>
-                            <div class="grid-two">
-                                <label>Email
-                                    <input type="email" id="profileEmail" value="" readonly>
-                                </label>
-                                <label>Ngày sinh
-                                    <input type="date" value="1999-09-20">
-                                </label>
-                            </div>
-                            <label>Phong cách ưa thích
-                                <input type="text" value="Minimal tailoring, monochrome, smart casual">
-                            </label>
-                            <button class="btn btn-primary-modern" type="submit">Lưu thay đổi</button>
-                        </form>
-                    </section>
-
-                    <section class="account-section" id="addresses">
-                        <div class="section-heading modern-heading">
-                            <div>
-                                <span class="eyebrow">Quản lý địa chỉ giao hàng</span>
-                                <h2>Sổ địa chỉ</h2>
-                            </div>
-                            <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã mở biểu mẫu thêm địa chỉ')">Thêm địa chỉ mới</button>
-                        </div>
-                        <div id="customerAddressBlock" class="customer-address-block"></div>
-                    </section>
-
-                    <section class="account-section" id="security">
-                        <div class="section-heading modern-heading">
-                            <div>
-                                <span class="eyebrow">Bảo mật & đăng xuất</span>
-                                <h2>Cài đặt tài khoản</h2>
-                            </div>
-                        </div>
-                        <div class="security-list">
-                            <article>
-                                <div>
-                                    <h3>Đổi mật khẩu</h3>
-                                    <p>Khuyến nghị cập nhật định kỳ mỗi 90 ngày.</p>
-                                </div>
-                                <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã mở biểu mẫu đổi mật khẩu')">Đổi mật khẩu</button>
-                            </article>
-                            <article>
-                                <div>
-                                    <h3>Thiết bị đăng nhập</h3>
-                                    <p>Chrome Windows • iPhone Safari • MacBook Air</p>
-                                </div>
-                                <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã đăng xuất khỏi các thiết bị khác')">Đăng xuất thiết bị khác</button>
-                            </article>
-                            <article>
-                                <div>
-                                    <h3>Đăng xuất</h3>
-                                    <p>Kết thúc phiên hiện tại và quay lại màn hình đăng nhập.</p>
-                                </div>
-                                <button class="btn btn-dark-modern" type="button" onclick="if(window.ModevaAuth&amp;&amp;ModevaAuth.getSession())ModevaAuth.logout();else demoAuthAction('Đăng xuất thành công')">Đăng xuất ngay</button>
-                            </article>
-                        </div>
-                    </section>
+            <div class="container">
+                <div class="account-highlight-card">
+                    <h3>Bạn đã đăng nhập thành công</h3>
+                    <p>Chức năng <strong>Thông tin khách hàng</strong> đã được tách riêng. Bấm nút bên dưới để vào khu vực thành viên.</p>
+                    <p style="margin-top:12px;">
+                        <a class="btn btn-primary-modern" href="customer-profile.html">Mở Thông tin khách hàng</a>
+                    </p>
                 </div>
             </div>
         </section>
@@ -315,13 +199,8 @@
         if (params.get('member') === '1') {
           var s = window.ModevaAuth && ModevaAuth.getSession();
           if (s && s.role === 'customer') {
-            if (window.ModevaAuth) ModevaAuth.applyCustomerDashboard();
-            setTimeout(function () {
-              var prof = document.getElementById('profile');
-              if (prof) prof.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 350);
-            if (window.showNotification) showNotification('Chào mừng, ' + s.name, 'success');
-            syncMemberPromoVisibility();
+            window.location.replace('customer-profile.html');
+            return;
           }
         }
 

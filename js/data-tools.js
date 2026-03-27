@@ -7,19 +7,29 @@
   var textEl = $('snapshotText');
 
   var KEYS = [
-    'modeva_auth_users',
     'modeva_customer_profiles',
     'modeva_customer_orders',
-    'modeva_admin_customer_soft_archive',
     'modeva_dash_products',
     'modeva_dash_categories',
     'modeva_dash_inventory',
     'modeva_dash_orders',
     'modeva_dash_customers',
     'modeva_dash_promos',
-    'modeva_dash_logs',
     'modeva_dash_inventory_losses'
   ];
+
+  function assertAdminRole () {
+    if (!window.ModevaAuth || typeof ModevaAuth.getSession !== 'function') {
+      window.location.replace('account.html');
+      return false;
+    }
+    var s = ModevaAuth.getSession();
+    if (!s || s.role !== 'admin') {
+      window.location.replace('account.html');
+      return false;
+    }
+    return true;
+  }
 
   function safeJsonParse (raw, fallback) {
     try { return JSON.parse(raw); } catch (e) { return fallback; }
@@ -165,7 +175,9 @@
 
   function renderText (obj) {
     var s = JSON.stringify(obj, null, 2);
-    if (textEl) textEl.value = s;
+    if (textEl) {
+      textEl.value = '[ĐÃ ẨN NỘI DUNG DỮ LIỆU ĐỂ TĂNG BẢO MẬT]\nDung lượng JSON: ' + s.length + ' ký tự.\nBạn vẫn có thể Download file hoặc Import từ file.';
+    }
     return s;
   }
 
@@ -178,7 +190,9 @@
     if (!payload || typeof payload !== 'object') throw new Error('Snapshot không hợp lệ');
     if (!payload.localStorage || typeof payload.localStorage !== 'object') throw new Error('Snapshot thiếu localStorage');
 
-    var keys = Object.keys(payload.localStorage);
+    var keys = Object.keys(payload.localStorage).filter(function (k) {
+      return KEYS.indexOf(k) >= 0;
+    });
     keys.forEach(function (k) {
       localStorage.setItem(k, JSON.stringify(payload.localStorage[k]));
     });
@@ -273,6 +287,9 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', bind);
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!assertAdminRole()) return;
+    bind();
+  });
 })();
 

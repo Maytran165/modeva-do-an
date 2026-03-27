@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin khách hàng | Modeva 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="fashion-page fashion-account-page">
+    <div class="site-background"></div>
+
+    <header class="fashion-header compact-header">
+        <div class="container fashion-header__inner">
+            <a href="../index.html" class="fashion-logo">
+                <span class="fashion-logo__mark">M</span>
+                <span>
+                    <strong>Modeva</strong>
+                    <small>Member Space</small>
+                </span>
+            </a>
+
+            <nav class="fashion-nav">
+                <a href="../index.html">Trang chủ</a>
+                <a href="catalog.html">Danh mục</a>
+                <a href="customer-care.html">Hỗ trợ</a>
+                <a href="account.html">Tài khoản</a>
+                <a href="customer-profile.html" class="active">Thông tin khách hàng</a>
+                <a href="order-tracking.html">Đơn hàng</a>
+            </nav>
+
+            <div class="fashion-header__actions">
+                <button class="mobile-nav-btn" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="cart.html" class="fashion-icon-link" aria-label="Giỏ hàng">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span class="badge"></span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="account-shell">
+        <section class="profile-dashboard" id="profile" hidden>
+            <div class="container profile-dashboard__grid">
+                <aside class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="profile-avatar">NT</div>
+                        <h3>Nguyễn Văn A</h3>
+                        <p>modeva.member@example.com</p>
+                        <span class="profile-tier">Thành viên</span>
+                    </div>
+                    <div class="profile-menu">
+                        <button class="profile-menu__item is-active" data-account-target="overview">Tổng quan</button>
+                        <button class="profile-menu__item" data-account-target="personal">Thông tin cá nhân</button>
+                        <button class="profile-menu__item" data-account-target="addresses">Địa chỉ giao hàng</button>
+                        <button class="profile-menu__item" data-account-target="security">Bảo mật</button>
+                    </div>
+                </aside>
+
+                <div class="profile-content">
+                    <section class="account-section is-active" id="overview">
+                        <div class="section-heading modern-heading">
+                            <div>
+                                <span class="eyebrow">Thông tin khách hàng</span>
+                                <h2>Các chi tiết thông tin</h2>
+                            </div>
+                        </div>
+                        <div class="account-stat-grid">
+                            <article><strong id="statOrdersCompleted">0</strong><span>Đơn hàng hoàn tất</span></article>
+                            <article><strong id="statVouchersCount">0</strong><span>Voucher còn hiệu lực</span></article>
+                            <article><strong id="statAddressesSaved">0</strong><span>Địa chỉ giao hàng đã lưu</span></article>
+                        </div>
+                        <div class="customer-voucher-box">
+                            <h3 class="customer-voucher-box__title">Voucher của bạn</h3>
+                            <ul id="customerVoucherList" class="customer-voucher-list"></ul>
+                        </div>
+                        <div id="memberPromoExclusive" class="account-member-promo" hidden>
+                            <div class="account-highlight-card">
+                                <h3>Ưu đãi dành riêng cho thành viên</h3>
+                                <p>Mở sớm capsule “Weekend Glow”, giảm thêm 10% cho đơn phụ kiện khi thanh toán trước 23:59 hôm nay.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="account-section" id="personal">
+                        <div class="section-heading modern-heading"><div><span class="eyebrow">Cập nhật thông tin cá nhân</span><h2>Hồ sơ cá nhân</h2></div></div>
+                        <form class="profile-form" onsubmit="return handleProfileSubmit(event)">
+                            <div class="grid-two">
+                                <label>Họ tên<input type="text" id="profileFullName" value="" required></label>
+                                <label>Số điện thoại<input type="tel" id="profilePhone" value="" required autocomplete="tel" inputmode="numeric" placeholder="10 chữ số, VD: 0901234567" title="Nhập đúng 10 chữ số"></label>
+                            </div>
+                            <div class="grid-two">
+                                <label>Email<input type="email" id="profileEmail" value="" readonly></label>
+                                <label>Ngày sinh<input type="date" value="1999-09-20"></label>
+                            </div>
+                            <label>Phong cách ưa thích<input type="text" value="Minimal tailoring, monochrome, smart casual"></label>
+                            <button class="btn btn-primary-modern" type="submit">Lưu thay đổi</button>
+                        </form>
+                    </section>
+
+                    <section class="account-section" id="addresses">
+                        <div class="section-heading modern-heading">
+                            <div><span class="eyebrow">Quản lý địa chỉ giao hàng</span><h2>Sổ địa chỉ</h2></div>
+                            <button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã mở biểu mẫu thêm địa chỉ')">Thêm địa chỉ mới</button>
+                        </div>
+                        <div id="customerAddressBlock" class="customer-address-block"></div>
+                    </section>
+
+                    <section class="account-section" id="security">
+                        <div class="section-heading modern-heading"><div><span class="eyebrow">Bảo mật & đăng xuất</span><h2>Cài đặt tài khoản</h2></div></div>
+                        <div class="security-list">
+                            <article><div><h3>Đổi mật khẩu</h3><p>Khuyến nghị cập nhật định kỳ mỗi 90 ngày.</p></div><button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã mở biểu mẫu đổi mật khẩu')">Đổi mật khẩu</button></article>
+                            <article><div><h3>Thiết bị đăng nhập</h3><p>Chrome Windows • iPhone Safari • MacBook Air</p></div><button class="btn btn-secondary-modern" type="button" onclick="demoAuthAction('Đã đăng xuất khỏi các thiết bị khác')">Đăng xuất thiết bị khác</button></article>
+                            <article><div><h3>Đăng xuất</h3><p>Kết thúc phiên hiện tại và quay lại màn hình đăng nhập.</p></div><button class="btn btn-dark-modern" type="button" onclick="if(window.ModevaAuth&&ModevaAuth.getSession())ModevaAuth.logout();else demoAuthAction('Đăng xuất thành công')">Đăng xuất ngay</button></article>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/modeva-logs.js"></script>
+    <script src="../js/modeva-api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js?v=20260327-profile-split"></script>
+    <script>
+    (function () {
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!window.ModevaAuth) return;
+        var s = ModevaAuth.getSession();
+        if (!s || s.role !== 'customer') {
+          window.location.replace('account.html');
+          return;
+        }
+        ModevaAuth.syncCustomerProfileVisibility();
+        ModevaAuth.applyCustomerDashboard();
+      });
+    })();
+    </script>
+</body>
+</html>

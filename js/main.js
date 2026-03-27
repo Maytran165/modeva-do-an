@@ -489,7 +489,7 @@ window.handleRegisterSubmit = function (event) {
     if (res.ok) {
       showNotification('Đăng ký thành công! Bạn được tặng 2 voucher chào mừng.', 'success');
       setTimeout(function () {
-        window.location.href = 'account.html?member=1';
+        window.location.href = 'customer-profile.html';
       }, 550);
     } else {
       showNotification(res.message, 'error');

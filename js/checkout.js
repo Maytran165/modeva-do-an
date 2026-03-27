@@ -21,6 +21,237 @@ const BANK_QR_CONFIG = {
 let checkoutPreviewOrderCode = 'ĐH' + Math.floor(100000 + Math.random() * 900000);
 let pendingBankOrderId = null;
 let isPlacingOrder = false;
+const PENDING_PAYMENT_KEY = 'modeva_pending_payment';
+
+function getPendingPaymentDraft () {
+    try {
+        var raw = localStorage.getItem(PENDING_PAYMENT_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setPendingPaymentDraft (draft) {
+    try {
+        localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(draft || null));
+    } catch (e) {}
+}
+
+function clearPendingPaymentDraft () {
+    try {
+        localStorage.removeItem(PENDING_PAYMENT_KEY);
+    } catch (e) {}
+}
+
+function cancelPendingPaymentRequest () {
+    clearPendingPaymentDraft();
+    pendingBankOrderId = null;
+    try {
+        var paidBtn = document.getElementById('bankPaidBtn');
+        if (paidBtn) paidBtn.style.display = 'none';
+        var cancelBtn = document.getElementById('bankCancelPendingBtn');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+    } catch (e) {}
+    showNotification('Thanh toán không thành công. Yêu cầu thanh toán đang chờ đã được hủy.', 'error');
+}
+
+function buildCheckoutFingerprint (orderData) {
+    if (!orderData) return '';
+    var owner = String(orderData.ownerEmail || '').toLowerCase();
+    var method = String(orderData.paymentMethod || '');
+    var total = String(orderData.total || 0);
+    var items = Array.isArray(orderData.items) ? orderData.items.map(function (it) {
+        return [it.productId || '', it.name || '', it.variant || '', it.qty || 0, it.price || 0].join('|');
+    }).join(';') : '';
+    return [owner, method, total, items].join('::');
+}
+
+function finalizeConfirmedOrder (orderData) {
+    if (!orderData || !orderData.orderId) {
+        return { ok: false, message: 'Thiếu dữ liệu đơn hàng.' };
+    }
+    var sess = window.ModevaAuth && ModevaAuth.getSession ? ModevaAuth.getSession() : null;
+    var owner = orderData.ownerEmail || (sess && sess.email) || '';
+    if (!window.ModevaAuth || !owner) {
+        return { ok: false, message: 'Không thể xác thực tài khoản khách.' };
+    }
+
+    if (typeof ModevaAuth.appendCustomerOrder === 'function') {
+        ModevaAuth.appendCustomerOrder(owner, orderData);
+    }
+    if (orderData.voucherCode && typeof ModevaAuth.consumeVoucher === 'function') {
+        ModevaAuth.consumeVoucher(owner, orderData.voucherCode);
+    }
+    if (typeof ModevaAuth.recordOrderCompleted === 'function') {
+        ModevaAuth.recordOrderCompleted(owner);
+    }
+    if (window.ModevaApi && typeof ModevaApi.syncOrder === 'function') {
+        ModevaApi.syncOrder(orderData);
+    }
+    if (window.ModevaLogs) {
+        ModevaLogs.append('Checkout: xác nhận thanh toán thành công — ' + orderData.orderId, 'info');
+    }
+    return markOrderAsPaid(orderData);
+}
+
+function resolveApiUrl (path) {
+    var p = String(path || '');
+    if (p && p.charAt(0) !== '/') p = '/' + p;
+    var base = '';
+    if (window.ModevaApi && typeof window.MODEVA_API_BASE === 'string' && window.MODEVA_API_BASE.trim()) {
+        base = window.MODEVA_API_BASE.trim().replace(/\/$/, '');
+    } else if (typeof window.MODEVA_API_BASE === 'string' && window.MODEVA_API_BASE.trim()) {
+        base = window.MODEVA_API_BASE.trim().replace(/\/$/, '');
+    } else {
+        base = '';
+    }
+    return base ? (base + p) : p;
+}
+
+function getApiBaseCandidates () {
+    if (typeof window === 'undefined' || !window.location) return [''];
+    var loc = window.location;
+    var candidates = [];
+    if (typeof window.MODEVA_API_BASE === 'string' && window.MODEVA_API_BASE.trim()) {
+        candidates.push(window.MODEVA_API_BASE.trim().replace(/\/$/, ''));
+    }
+    candidates.push(loc.origin || '');
+    var proto = loc.protocol || 'http:';
+    var host = loc.hostname || 'localhost';
+    candidates.push('http://127.0.0.1:3000');
+    candidates.push(proto + '//' + host + ':3000');
+    candidates.push('http://localhost:3000');
+    candidates.push('http://127.0.0.1:5000');
+    candidates.push(proto + '//' + host + ':5000');
+    candidates.push('http://localhost:5000');
+    var uniq = [];
+    var seen = {};
+    candidates.forEach(function (x) {
+        var k = String(x || '').trim();
+        if (seen[k]) return;
+        seen[k] = true;
+        uniq.push(k);
+    });
+    return uniq;
+}
+
+function createMomoPaymentAtBase (apiBase, orderData) {
+    var p = '/api/pay/momo/create';
+    var alt = '/payment';
+    var url = apiBase ? (apiBase + p) : p;
+    function callUrl (targetUrl) {
+        return fetch(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            orderId: orderData.orderId,
+            requestId: orderData.orderId,
+            orderInfo: 'Thanh toan don ' + orderData.orderId,
+            amount: orderData.total,
+            requestType: 'payWithMethod',
+            lang: 'vi',
+            extraData: orderData.ownerEmail || ''
+        })
+        }).then(function (res) {
+        return res.text().then(function (raw) {
+            var data = null;
+            try { data = raw ? JSON.parse(raw) : {}; } catch (e) { data = null; }
+            var momoPayload = data && data.momo ? data.momo : data;
+            if (!res.ok || !data || !momoPayload) {
+                return {
+                    ok: false,
+                    message: (data && data.message) ? data.message : ('HTTP ' + res.status),
+                    endpoint: targetUrl,
+                    errorType: 'http'
+                };
+            }
+            return { ok: true, momo: momoPayload, endpoint: targetUrl };
+        });
+    }).catch(function (e) {
+            return { ok: false, message: String((e && e.message) || 'network error'), endpoint: targetUrl };
+        });
+    }
+    return callUrl(url).then(function (r) {
+        if (r && r.ok) return r;
+        var url2 = apiBase ? (apiBase + alt) : alt;
+        return callUrl(url2).then(function (r2) {
+            if (r2 && r2.ok) return r2;
+            return r2 || r;
+        });
+    });
+}
+
+function createMomoPayment (orderData) {
+    if (!orderData || !orderData.orderId) {
+        return Promise.resolve({ ok: false, message: 'Thiếu dữ liệu đơn hàng để tạo thanh toán MoMo.' });
+    }
+    var bases = getApiBaseCandidates();
+    var i = 0;
+    var lastErr = null;
+    function next () {
+        if (i >= bases.length) {
+            return Promise.resolve({
+                ok: false,
+                message: 'Không kết nối được API MoMo. Kiểm tra server Node (cổng 5000 hoặc 3000) và MOMO_* trong server/.env.',
+                detail: lastErr
+            });
+        }
+        var base = bases[i++];
+        return createMomoPaymentAtBase(base, orderData).then(function (r) {
+            if (r && r.ok) {
+                if (base) window.MODEVA_API_BASE = base;
+                return r;
+            }
+            // Nếu endpoint đã phản hồi HTTP nhưng bị lỗi nghiệp vụ/config,
+            // dừng ngay để hiển thị đúng lỗi từ server (không retry vòng vo).
+            if (r && r.errorType === 'http') {
+                return {
+                    ok: false,
+                    message: r.message || 'Server MoMo trả lỗi.',
+                    detail: r
+                };
+            }
+            lastErr = r;
+            return next();
+        });
+    }
+    return next().catch(function () {
+        return { ok: false, message: 'Không tạo được thanh toán MoMo.' };
+    });
+}
+
+function handleMomoReturnResult () {
+    const q = new URLSearchParams(window.location.search);
+    const orderId = String(q.get('orderId') || '').trim();
+    if (!orderId) return;
+
+    const resultCode = String(q.get('resultCode') || '').trim();
+    if (!resultCode) return;
+
+    var draft = getPendingPaymentDraft();
+    var draftOrder = (draft && draft.orderData && draft.orderData.orderId === orderId) ? draft.orderData : null;
+
+    if (resultCode === '0') {
+        const paidRes = finalizeConfirmedOrder(draftOrder || { orderId: orderId, customer: {}, paymentMethod: 'momo' });
+        if (paidRes && paidRes.ok) {
+            clearPendingPaymentDraft();
+            showSuccessModal(orderId);
+            showNotification('Thanh toán MoMo thành công.', 'success');
+        } else {
+            showNotification((paidRes && paidRes.message) ? paidRes.message : 'Không thể cập nhật thanh toán MoMo.', 'error');
+        }
+    } else {
+        clearPendingPaymentDraft();
+        const msg = q.get('message') || 'Thanh toán MoMo chưa thành công.';
+        showNotification(msg, 'error');
+    }
+
+    if (window.history && window.history.replaceState) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+}
 
 function renderCheckoutVouchers () {
     const host = document.getElementById('checkoutVoucherList');
@@ -189,6 +420,10 @@ function updateBankTransferInfo (orderCodeOverride) {
     const paidBtn = document.getElementById('bankPaidBtn');
     if (paidBtn) {
         paidBtn.style.display = pendingBankOrderId ? 'inline-flex' : 'none';
+    }
+    const cancelBtn = document.getElementById('bankCancelPendingBtn');
+    if (cancelBtn) {
+        cancelBtn.style.display = pendingBankOrderId ? 'inline-flex' : 'none';
     }
 }
 
@@ -388,8 +623,17 @@ function placeOrder() {
         shipping: checkoutData.shipping,
         total: checkoutData.subtotal - checkoutData.discount + checkoutData.shipping,
         createdAt: new Date().toISOString(),
-        paymentStatus: checkoutData.paymentMethod === 'bank' ? 'pending' : 'paid'
+        paymentStatus: (checkoutData.paymentMethod === 'bank' || checkoutData.paymentMethod === 'momo') ? 'pending' : 'paid'
     };
+    const checkoutFingerprint = buildCheckoutFingerprint(orderData);
+    const existingPending = getPendingPaymentDraft();
+    if (existingPending && existingPending.status === 'pending' &&
+        existingPending.fingerprint === checkoutFingerprint &&
+        (Date.now() - (existingPending.at || 0) < 15 * 60 * 1000)) {
+        showNotification('Đang có một yêu cầu thanh toán cho giỏ hàng này. Hoàn tất hoặc chờ hết phiên trước khi tạo yêu cầu mới.', 'warning');
+        isPlacingOrder = false;
+        return;
+    }
 
     // Update "nội dung chuyển khoản" so khách thanh toán theo đúng đơn mới tạo
     const bankInfoEl = document.getElementById('bankInfo');
@@ -407,23 +651,15 @@ function placeOrder() {
     if (bankQrCaptionEl) bankQrCaptionEl.textContent = 'Quét mã để thanh toán đơn #' + orderData.orderId;
     updateBankTransferInfo(orderData.orderId);
     
-    // Store order in localStorage
-    localStorage.setItem('lastOrder', JSON.stringify(orderData));
-
-    ModevaAuth.appendCustomerOrder(sess.email, orderData);
-    if (checkoutData.voucherCode && ModevaAuth.consumeVoucher) {
-        ModevaAuth.consumeVoucher(sess.email, checkoutData.voucherCode);
-    }
-    ModevaAuth.recordOrderCompleted(sess.email);
-    if (window.ModevaLogs) {
-        ModevaLogs.append('Checkout: hoàn tất đặt hàng — ' + orderData.orderId + ' — tổng ' + orderData.total + 'đ', 'info');
-    }
-    if (window.ModevaApi && typeof ModevaApi.syncOrder === 'function') {
-        ModevaApi.syncOrder(orderData);
-    }
-
     // Bank transfer flow: wait for user to pay in banking app, then confirm.
     if (checkoutData.paymentMethod === 'bank') {
+        setPendingPaymentDraft({
+            at: Date.now(),
+            status: 'pending',
+            fingerprint: checkoutFingerprint,
+            orderData: orderData
+        });
+        localStorage.setItem('lastOrder', JSON.stringify(orderData));
         pendingBankOrderId = orderData.orderId;
         updateBankTransferInfo(orderData.orderId);
         const bankInfoEl2 = document.getElementById('bankInfo');
@@ -436,8 +672,44 @@ function placeOrder() {
         return;
     }
 
+    // MoMo flow: chuyển hướng sang cổng thanh toán
+    if (checkoutData.paymentMethod === 'momo') {
+        setPendingPaymentDraft({
+            at: Date.now(),
+            status: 'pending',
+            fingerprint: checkoutFingerprint,
+            orderData: orderData
+        });
+        localStorage.setItem('lastOrder', JSON.stringify(orderData));
+        createMomoPayment(orderData).then(function (r) {
+            if (!r || !r.ok || !r.momo) {
+                clearPendingPaymentDraft();
+                var msg = (r && r.message) ? r.message : 'Không thể tạo thanh toán MoMo.';
+                if (r && r.detail && r.detail.endpoint) {
+                    msg += ' Endpoint cuối: ' + r.detail.endpoint;
+                }
+                showNotification(msg, 'error');
+                isPlacingOrder = false;
+                return;
+            }
+            const payUrl = r.momo.payUrl || r.momo.deeplink || r.momo.qrCodeUrl || '';
+            if (!payUrl) {
+                showNotification('MoMo chưa trả về link thanh toán.', 'error');
+                isPlacingOrder = false;
+                return;
+            }
+            if (window.ModevaLogs) {
+                ModevaLogs.append('Checkout: tạo link MoMo thành công — ' + orderData.orderId, 'info');
+            }
+            showNotification('Đang chuyển đến cổng thanh toán MoMo...', 'info');
+            window.location.href = payUrl;
+        });
+        return;
+    }
+
     // Other methods: complete immediately (demo)
-    const paidRes = markOrderAsPaid(orderData);
+    localStorage.setItem('lastOrder', JSON.stringify(orderData));
+    const paidRes = finalizeConfirmedOrder(orderData);
     if (!paidRes || !paidRes.ok) {
         showNotification((paidRes && paidRes.message) ? paidRes.message : 'Không thể xác nhận thanh toán.', 'error');
         isPlacingOrder = false;
@@ -697,16 +969,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     renderCheckoutVouchers();
     updateBankTransferInfo();
+    handleMomoReturnResult();
 
     // Restore pending bank order state (if user refreshed page)
     try {
-        const lastRaw = localStorage.getItem('lastOrder');
-        if (lastRaw) {
-            const last = JSON.parse(lastRaw);
-            if (last && last.orderId && last.paymentMethod === 'bank' && !last.paidAt) {
-                pendingBankOrderId = last.orderId;
-                updateBankTransferInfo(last.orderId);
-            }
+        const pending = getPendingPaymentDraft();
+        if (pending && pending.status === 'pending' && pending.orderData && pending.orderData.paymentMethod === 'bank') {
+            const last = pending.orderData;
+            pendingBankOrderId = last.orderId;
+            updateBankTransferInfo(last.orderId);
         }
     } catch (e) {}
 
@@ -736,15 +1007,28 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (e) {}
             const doneId = pendingBankOrderId;
             pendingBankOrderId = null;
-            const paidRes = markOrderAsPaid(paidOrderData || { orderId: doneId, customer: {} });
+            const draft = getPendingPaymentDraft();
+            const orderData = (draft && draft.orderData && draft.orderData.orderId === doneId)
+                ? Object.assign({}, draft.orderData, { paidAt: new Date().toISOString(), paymentStatus: 'paid' })
+                : (paidOrderData || { orderId: doneId, customer: {}, paymentMethod: 'bank' });
+            const paidRes = finalizeConfirmedOrder(orderData);
             if (!paidRes || !paidRes.ok) {
                 showNotification((paidRes && paidRes.message) ? paidRes.message : 'Đơn đã được thanh toán trước đó.', 'error');
                 paidBtn.disabled = false;
                 return;
             }
+            clearPendingPaymentDraft();
             updateBankTransferInfo(doneId);
             showSuccessModal(doneId);
             paidBtn.disabled = false;
+        });
+    }
+
+    const cancelPendingBtn = document.getElementById('bankCancelPendingBtn');
+    if (cancelPendingBtn && !cancelPendingBtn.dataset.bound) {
+        cancelPendingBtn.dataset.bound = '1';
+        cancelPendingBtn.addEventListener('click', function () {
+            cancelPendingPaymentRequest();
         });
     }
 

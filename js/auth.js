@@ -14,6 +14,12 @@
   var CUSTOMER_RELOAD_GUARD_KEY = 'modeva_customer_reload_guard';
   var LOCKOUT_KEY = 'modeva_login_lockout';
   var CUSTOMER_RELOAD_MAX = 10;
+  var SYSTEM_ADMIN_EMAIL = 'admin.secure@modeva.vn';
+  var SYSTEM_STAFF_EMAIL = 'staff.secure@modeva.vn';
+  var SYSTEM_CUSTOMER_EMAIL = 'customer.secure@modeva.vn';
+  var LEGACY_ADMIN_EMAIL = 'admin@modeva.vn';
+  var LEGACY_STAFF_EMAIL = 'staff@modeva.vn';
+  var LEGACY_CUSTOMER_EMAIL = 'customer@modeva.vn';
 
   /** Thời gian phiên (ms) — hết hạn phải đăng nhập lại */
   var SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -218,6 +224,9 @@
   }
 
   function enforceCustomerReloadLimit () {
+    // Tắt cơ chế auto-logout theo số lần reload cho khách.
+    // Yêu cầu hiện tại: khách hàng luôn giữ phiên đăng nhập.
+    return;
     var raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return;
     var sess = null;
@@ -278,7 +287,7 @@
     if (window.ModevaLogs) {
       ModevaLogs.append('Đăng nhập thành công — ' + id + ' (' + user.role + ')', 'info');
     }
-    var redirect = 'account.html?member=1';
+    var redirect = 'customer-profile.html';
     if (user.role === 'admin') redirect = 'admin-dashboard.html';
     else if (user.role === 'staff') redirect = 'staff-dashboard.html';
     return { ok: true, role: user.role, redirect: redirect };
@@ -299,34 +308,44 @@
   function seedUsersIfNeeded () {
     var users = getUsers();
     var changed = false;
-    if (!users['admin@modeva.vn']) {
-      users['admin@modeva.vn'] = {
-        passwordHash: '48724d2be291209747f932bb6046b979eceec14e569403cff13add133c3c0c2f',
-        role: 'admin',
-        name: 'Quản trị viên'
-      };
+    function migrateLegacyEmail (legacyEmail, nextEmail) {
+      if (!users[legacyEmail]) return;
+      if (!users[nextEmail]) users[nextEmail] = users[legacyEmail];
+      delete users[legacyEmail];
       changed = true;
     }
-    if (!users['staff@modeva.vn']) {
-      users['staff@modeva.vn'] = {
-        passwordHash: 'da978c74838a8ff795dfca7a90cda5a14bff4b584e7f8949ca89daa7c28cf421',
-        role: 'staff',
-        name: 'Nhân viên bán hàng',
-        staffPosition: 'sales'
-      };
-      changed = true;
-    } else if (!users['staff@modeva.vn'].staffPosition) {
-      users['staff@modeva.vn'].staffPosition = 'sales';
-      changed = true;
-    }
-    if (!users['customer@modeva.vn']) {
-      users['customer@modeva.vn'] = {
-        passwordHash: '2e11ed22e46082ed33cd5f7a83a9bf30d8fd31ebf5f07b9ca0d4a0235875f2d5',
-        role: 'customer',
-        name: 'Khách hàng demo'
-      };
-      changed = true;
-    }
+    migrateLegacyEmail(LEGACY_ADMIN_EMAIL, SYSTEM_ADMIN_EMAIL);
+    migrateLegacyEmail(LEGACY_STAFF_EMAIL, SYSTEM_STAFF_EMAIL);
+    migrateLegacyEmail(LEGACY_CUSTOMER_EMAIL, SYSTEM_CUSTOMER_EMAIL);
+
+    users[SYSTEM_ADMIN_EMAIL] = Object.assign({}, users[SYSTEM_ADMIN_EMAIL] || {}, {
+      passwordHash: '911fde626bc1b51f9b17790de6eb5e5f27badb71d4c47eef154d75da6fad1242',
+      passwordSalt: null,
+      passwordKdf: null,
+      role: 'admin',
+      name: 'Quản trị viên'
+    });
+    changed = true;
+
+    users[SYSTEM_STAFF_EMAIL] = Object.assign({}, users[SYSTEM_STAFF_EMAIL] || {}, {
+      passwordHash: '99c7ce97c25119af291d42ae2c98c77c097d448ee565d9740b5a6bcf6c1cc2da',
+      passwordSalt: null,
+      passwordKdf: null,
+      role: 'staff',
+      name: 'Nhân viên bán hàng',
+      staffPosition: 'sales'
+    });
+    changed = true;
+
+    users[SYSTEM_CUSTOMER_EMAIL] = Object.assign({}, users[SYSTEM_CUSTOMER_EMAIL] || {}, {
+      passwordHash: '11aaf0a6e99b32863763407f67dba26fe47970eb55a9ae6773f206dcba65f146',
+      passwordSalt: null,
+      passwordKdf: null,
+      role: 'customer',
+      name: 'Khách hàng demo'
+    });
+    changed = true;
+
     if (changed) saveUsers(users);
   }
 
@@ -873,7 +892,8 @@
       if (users[email]) {
         return Promise.resolve({ ok: false, message: 'Email này đã được đăng ký.' });
       }
-      if (email === 'admin@modeva.vn' || email === 'staff@modeva.vn') {
+      if (email === SYSTEM_ADMIN_EMAIL || email === SYSTEM_STAFF_EMAIL ||
+          email === LEGACY_ADMIN_EMAIL || email === LEGACY_STAFF_EMAIL) {
         return Promise.resolve({ ok: false, message: 'Không thể đăng ký bằng email hệ thống.' });
       }
 
@@ -930,7 +950,8 @@
       if (!getUsers()[id]) {
         return { ok: false, message: 'Email chưa đăng ký trong hệ thống.' };
       }
-      if (id === 'admin@modeva.vn' || id === 'staff@modeva.vn') {
+      if (id === SYSTEM_ADMIN_EMAIL || id === SYSTEM_STAFF_EMAIL ||
+          id === LEGACY_ADMIN_EMAIL || id === LEGACY_STAFF_EMAIL) {
         return { ok: false, message: 'Tài khoản nội bộ: liên hệ quản trị để đặt lại mật khẩu.' };
       }
       var u = getUsers()[id];
@@ -1154,11 +1175,7 @@
           localStorage.removeItem(SESSION_KEY);
           return null;
         }
-        var ttl = p.remember === false ? SESSION_TTL_MS : REMEMBER_SESSION_TTL_MS;
-        if (Date.now() - p.at > ttl) {
-          localStorage.removeItem(SESSION_KEY);
-          return null;
-        }
+        // Không tự hết hạn phiên: giữ trạng thái đăng nhập cho đến khi user chủ động đăng xuất.
         return p;
       } catch (e) {
         return null;

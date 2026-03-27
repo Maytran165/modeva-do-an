@@ -228,6 +228,10 @@
                                                 <i class="fas fa-circle-check"></i>
                                                 Tôi đã thanh toán
                                             </button>
+                                            <button type="button" class="btn btn-secondary-modern bank-paid-btn" id="bankCancelPendingBtn" style="display:none;">
+                                                <i class="fas fa-circle-xmark"></i>
+                                                Hủy yêu cầu thanh toán
+                                            </button>
                                             <p class="bank-transfer-note">
                                                 Sau khi quét QR trên điện thoại và bấm <strong>Thanh toán</strong> trong app MB Bank,
                                                 quay lại đây và bấm <strong>Tôi đã thanh toán</strong> để hoàn tất đơn.
@@ -441,10 +445,26 @@
         </div>
     </footer>
 
+    <script>
+        (function () {
+            // Tự chọn API base theo môi trường chạy:
+            // - Nếu đang mở từ Node server (cùng origin), dùng cùng origin
+            // - Nếu chạy static server khác cổng (vd 8080), fallback về localhost:3000
+            if (typeof window === 'undefined' || !window.location) return;
+            var loc = window.location;
+            var sameOrigin = loc.origin && /:(3000|5000)$/i.test(loc.origin);
+            if (sameOrigin) {
+                window.MODEVA_API_BASE = loc.origin;
+                return;
+            }
+            var proto = loc.protocol || 'http:';
+            window.MODEVA_API_BASE = proto + '//' + '127.0.0.1' + ':5000';
+        })();
+    </script>
     <script src="../js/modeva-logs.js"></script>
     <script src="../js/modeva-api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
-    <script src="../js/checkout.js?v=20260325b"></script>
+    <script src="../js/checkout.js?v=20260327-momo-fix6"></script>
 </body>
 </html>

@@ -13,6 +13,8 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const mysql = require('mysql2/promise');
+const crypto = require('crypto');
+const https = require('https');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const ROOT = path.join(__dirname, '..');
@@ -39,6 +41,37 @@ app.use(function (req, res, next) {
 
 app.use(express.json({ limit: '2mb' }));
 
+function postJsonHttps (hostname, pathName, bodyObj) {
+  const requestBody = JSON.stringify(bodyObj || {});
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: hostname,
+      port: 443,
+      path: pathName,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(requestBody)
+      }
+    }, (res) => {
+      let raw = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => { raw += chunk; });
+      res.on('end', () => {
+        try {
+          const json = raw ? JSON.parse(raw) : {};
+          resolve({ statusCode: res.statusCode || 0, data: json });
+        } catch (e) {
+          reject(new Error('MoMo parse response lỗi: ' + e.message));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(requestBody);
+    req.end();
+  });
+}
+
 function requireSyncSecret (req, res, next) {
   const want = process.env.MODEVA_SYNC_SECRET;
   if (!want) return next();
@@ -54,6 +87,112 @@ app.get('/api/health', async (req, res) => {
     return res.json({ ok: true, mysql: true });
   } catch (e) {
     return res.status(503).json({ ok: false, mysql: false, message: String(e.message || e) });
+  }
+});
+
+app.post('/api/pay/momo/create', async (req, res) => {
+  const cfg = {
+    partnerCode: process.env.MOMO_PARTNER_CODE || '',
+    accessKey: process.env.MOMO_ACCESS_KEY || '',
+    secretKey: process.env.MOMO_SECRET_KEY || '',
+    endpointHost: process.env.MOMO_ENDPOINT_HOST || 'test-payment.momo.vn',
+    endpointPath: process.env.MOMO_ENDPOINT_PATH || '/v2/gateway/api/create',
+    redirectUrl: process.env.MOMO_REDIRECT_URL || '',
+    ipnUrl: process.env.MOMO_IPN_URL || ''
+  };
+
+  if (!cfg.partnerCode || !cfg.accessKey || !cfg.secretKey || !cfg.redirectUrl || !cfg.ipnUrl) {
+    return res.status(500).json({ ok: false, message: 'Thiếu cấu hình MoMo trong .env' });
+  }
+
+  const b = req.body || {};
+  const amount = String(Math.max(0, parseInt(b.amount, 10) || 0));
+  const orderId = String(b.orderId || '').trim();
+  const orderInfo = String(b.orderInfo || ('Thanh toan don ' + orderId)).trim();
+  const requestType = String(b.requestType || 'payWithMethod');
+  const requestId = String(b.requestId || orderId || (cfg.partnerCode + Date.now()));
+  const extraData = b.extraData != null ? String(b.extraData) : '';
+  const orderGroupId = b.orderGroupId != null ? String(b.orderGroupId) : '';
+  const autoCapture = b.autoCapture !== false;
+  const lang = String(b.lang || 'vi');
+  const paymentCode = b.paymentCode != null ? String(b.paymentCode) : undefined;
+
+  if (!orderId) return res.status(400).json({ ok: false, message: 'Thiếu orderId' });
+  if (!amount || amount === '0') return res.status(400).json({ ok: false, message: 'Số tiền không hợp lệ' });
+
+  const rawSignature =
+    'accessKey=' + cfg.accessKey +
+    '&amount=' + amount +
+    '&extraData=' + extraData +
+    '&ipnUrl=' + cfg.ipnUrl +
+    '&orderId=' + orderId +
+    '&orderInfo=' + orderInfo +
+    '&partnerCode=' + cfg.partnerCode +
+    '&redirectUrl=' + cfg.redirectUrl +
+    '&requestId=' + requestId +
+    '&requestType=' + requestType;
+
+  const signature = crypto.createHmac('sha256', cfg.secretKey).update(rawSignature).digest('hex');
+  const payload = {
+    partnerCode: cfg.partnerCode,
+    partnerName: 'Modeva',
+    storeId: 'ModevaStore',
+    requestId: requestId,
+    amount: amount,
+    orderId: orderId,
+    orderInfo: orderInfo,
+    redirectUrl: cfg.redirectUrl,
+    ipnUrl: cfg.ipnUrl,
+    lang: lang,
+    requestType: requestType,
+    autoCapture: autoCapture,
+    extraData: extraData,
+    orderGroupId: orderGroupId,
+    signature: signature
+  };
+  if (paymentCode) payload.paymentCode = paymentCode;
+
+  try {
+    const momoRes = await postJsonHttps(cfg.endpointHost, cfg.endpointPath, payload);
+    return res.status(200).json({
+      ok: momoRes.data && (momoRes.data.resultCode === 0 || !!momoRes.data.payUrl),
+      momo: momoRes.data || {}
+    });
+  } catch (e) {
+    return res.status(502).json({ ok: false, message: 'Không gọi được MoMo: ' + String(e.message || e) });
+  }
+});
+
+app.post('/api/pay/momo/ipn', async (req, res) => {
+  const b = req.body || {};
+  const orderId = String(b.orderId || '').trim();
+  const resultCode = parseInt(b.resultCode, 10);
+  const transId = b.transId != null ? String(b.transId) : '';
+  const message = b.message != null ? String(b.message) : '';
+
+  if (!orderId) return res.json({ ok: true });
+
+  try {
+    if (resultCode === 0) {
+      await pool.execute(
+        `UPDATE orders
+         SET payment_status = 'paid', paid_at = NOW(), status = 'processing',
+             note = CONCAT(COALESCE(note, ''), '\n[MoMo IPN] transId=', ?, ' msg=', ?)
+         WHERE order_code = ? LIMIT 1`,
+        [transId, message, orderId]
+      );
+    } else {
+      await pool.execute(
+        `UPDATE orders
+         SET note = CONCAT(COALESCE(note, ''), '\n[MoMo IPN fail] code=', ?, ' msg=', ?)
+         WHERE order_code = ? LIMIT 1`,
+        [String(resultCode), message, orderId]
+      );
+    }
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ ok: false, message: String(e.message || e) });
   }
 });
 
@@ -86,7 +225,7 @@ sync.post('/register', async (req, res) => {
   if (!fullName) {
     return res.status(400).json({ ok: false, message: 'Thiếu họ tên' });
   }
-  if (email === 'admin@modeva.vn' || email === 'staff@modeva.vn') {
+  if (email.endsWith('@modeva.vn')) {
     return res.status(403).json({ ok: false, message: 'Email hệ thống' });
   }
 
